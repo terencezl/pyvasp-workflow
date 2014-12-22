@@ -71,7 +71,7 @@ def generate_structure(run_spec):
     poscar_dict = run_spec['poscar']
     elem_types_struct = [re.sub(r'_.*', '', i) for i in run_spec['elem_types']]
     if poscar_dict.has_key('template') and poscar_dict['template']:
-        poscar = mg.io.vaspio.Poscar.from_file(template_dir, poscar_dict['template'])
+        poscar = mg.io.vaspio.Poscar.from_file(os.path.join(template_dir, poscar_dict['template']))
         structure = poscar.structure
         for i, item in enumerate(structure.symbol_set):
             structure.replace_species({item: elem_types_struct[i]})

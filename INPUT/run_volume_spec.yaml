@@ -1,0 +1,25 @@
+incar:
+  ISPIN: 2
+  PREC: Normal
+  SIGMA: 0.1
+  EDIFF: 1e-05
+  ISIF: 2
+  NSW: 20
+  IBRION: 2
+  POTIM: 0.4
+  EDIFFG: -0.05
+  NPAR: 4
+  LCHARG: False
+  LWAVE: False
+kpoints:
+  mode: M
+  divisions: [13, 13, 13]
+pot_type: PAW-PBE
+elem_types: [Fe_pv, N]
+structure: rocksalt
+poscar:
+  template: POSCAR
+volume:
+  begin: 40
+  end:   60
+  sample_point_num: 5

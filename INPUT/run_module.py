@@ -12,8 +12,8 @@ import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 import pymatgen as mg
 
-POTENTIAL_DATABASE = '/nfs/02/utl0268/terencelz/local/POTENTIAL_DATABASE/'
-VASP = '/nfs/02/utl0268/terencelz/local/bin/vasp.5.3.3-oakley'
+POTENTIAL_DATABASE = 'PATH-TO-YOUR-POTENTIAL-DATABASE'
+VASP = 'PATH-TO-YOUR-EXECUTABLE'
 
 template_dir = os.path.join(os.getcwd(), 'INPUT/')
 
@@ -39,7 +39,7 @@ def run_vasp():
     run mpi version of vasp
     """
     run = call('time mpiexec ' + VASP + ' | tee -a stdout', shell=True)
-    print('')
+    print('='*100)
     # if run != 0:
         # raise RuntimeError("VASP run error!")
 

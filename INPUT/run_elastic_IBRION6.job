@@ -6,4 +6,4 @@ module load mkl
 
 cd $PBS_O_WORKDIR
 date
-python INPUT/run_IBRION6_energy.py INPUT/run_elastic_IBRION6_spec.yaml
+python INPUT/run_IBRION6_energy.py INPUT/run_elastic_IBRION6_spec.yaml elastic_run_IBRION6

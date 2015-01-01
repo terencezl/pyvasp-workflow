@@ -6,4 +6,4 @@ module load mkl
 
 cd $PBS_O_WORKDIR
 date
-python INPUT/run_elastic_energy.py INPUT/run_elastic_energy_spec.yaml
+python INPUT/run_elastic_energy.py INPUT/run_elastic_energy_spec.yaml elastic_run

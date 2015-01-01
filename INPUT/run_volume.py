@@ -18,8 +18,8 @@ def volume_loop_fitting(run_spec, (incar, kpoints, structure), (volume, energy, 
     loop over a set of volumes
     """
     for i, V in enumerate(volume):
-        volume_str = '{:.2f}'.format(V)
-        chdir(volume_str)
+        # volume_str = '{:.2f}'.format(V)
+        # chdir(volume_str)
         incar.write_file('INCAR')
         kpoints.write_file('KPOINTS')
         structure.scale_lattice(V)
@@ -30,7 +30,7 @@ def volume_loop_fitting(run_spec, (incar, kpoints, structure), (volume, energy, 
         oszicar = mg.io.vaspio.Oszicar('OSZICAR')
         energy[i] = oszicar.final_energy
         mag[i] = oszicar.ionic_steps[-1]['mag']
-        os.chdir('..')
+        # os.chdir('..')
 
     fitting_params = pydass_vasp.fitting.eos_fit(volume, energy, save_figs=True)['parameters']
     with open('fitting_params.json', 'w') as f:
@@ -49,6 +49,7 @@ def detect_is_mag(mag):
 
 if __name__ == '__main__':
     filename = sys.argv[1]
+    subdirname = sys.argv[2]
     with open(filename) as f:
         run_spec = yaml.load(f)
 
@@ -58,7 +59,7 @@ if __name__ == '__main__':
     properties = {}
 
     # first round
-    chdir('volume_run1')
+    chdir(subdirname)
     volume_params = run_spec['volume']
     volume = np.linspace(volume_params['begin'], volume_params['end'], volume_params['sample_point_num'])
     energy = np.zeros(len(volume))
@@ -75,7 +76,7 @@ if __name__ == '__main__':
     is_V0_within_valley = bool(V0_ralative_pos > 0.4 and V0_ralative_pos < 0.6)
 
     if not is_V0_within_valley:
-        chdir('volume_run2')
+        chdir(subdirname)
         V_begin = V0 * 9./10
         V_end = V0 * 11./10
         volume = np.linspace(V_begin, V_end, 5)
@@ -90,7 +91,7 @@ if __name__ == '__main__':
         is_V0_within_valley = bool(V0_ralative_pos > 0.4 and V0_ralative_pos < 0.6)
 
     # equi_relax
-    chdir('equi_relax')
+    chdir(subdirname)
     incar.write_file('INCAR')
     kpoints.write_file('KPOINTS')
     structure.scale_lattice(V0)

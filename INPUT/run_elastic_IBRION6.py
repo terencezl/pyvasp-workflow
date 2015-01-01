@@ -15,6 +15,7 @@ from run_module import chdir, enter_main_dir, run_vasp, read_incar_kpoints, writ
 
 if __name__ == '__main__':
     filename = sys.argv[1]
+    subdirname = sys.argv[2]
     with open(filename) as f:
         run_spec = yaml.load(f)
     enter_main_dir(run_spec)
@@ -26,9 +27,7 @@ if __name__ == '__main__':
         incar.update({'ISPIN': 1})
     structure = generate_structure(run_spec)
 
-    # if len(sys.argv) == 4 and sys.argv[2] != 'elem_types' and sys.argv[2] != 'structure':
-        # run_dir_name = run_dir_name + '_' + sys.argv[2] +  sys.argv[3]
-    chdir('elastic_run')
+    chdir(subdirname)
     incar.write_file('INCAR')
     kpoints.write_file('KPOINTS')
     structure.scale_lattice(properties['V0'])

@@ -15,6 +15,7 @@ from run_module import chdir, enter_main_dir, run_vasp, read_incar_kpoints, writ
 
 if __name__ == '__main__':
     filename = sys.argv[1]
+    subdirname = sys.argv[2]
     with open(filename) as f:
         run_spec = yaml.load(f)
 
@@ -24,7 +25,7 @@ if __name__ == '__main__':
     kpoint_params = run_spec['kpoints_change']
     kpoints_change = np.linspace(kpoint_params['begin'], kpoint_params['end'], kpoint_params['sample_point_num'])
     energy = np.zeros(len(kpoints_change))
-    chdir('kpoints_run')
+    chdir(subdirname)
 
     for i, kp in enumerate(kpoints_change):
         kp_dir = '{:.2f}'.format(kp)

@@ -17,7 +17,7 @@ def get_test_type_strain_delta_list(cryst_sys):
     if cryst_sys == 'cubic':
         test_type_list = ["c11+2c12", "c11-c12", "c44"]
         strain_list = []
-        delta_list = np.ones(((3, 3))) * [0, -0.03, 0.03]
+        delta_list = np.ones(((3, 5))) * [0, -0.02, 0.02, -0.03, 0.03]
         delta_list[0] = delta_list[0]/np.sqrt(3)
 
         strain_list.append(lambda delta: np.array([[1 + delta, 0, 0],
@@ -40,7 +40,7 @@ def get_test_type_strain_delta_list(cryst_sys):
         test_type_list = ["c11", "c33", "c44",
                 "5c11-4c12-2c13+c33", "c11+c12-4c13+2c33", "c11+c12-4c13+2c33+2c66"]
         strain_list = []
-        delta_list = np.ones(((6, 3))) * [0, -0.03, 0.03]
+        delta_list = np.ones(((6, 5))) * [0, -0.02, 0.02, -0.03, 0.03]
         strain_list.append(lambda delta: np.array([[1 + delta, 0, 0],
                                           [0, 1, 0],
                                           [0, 0, 1]]))
@@ -69,7 +69,7 @@ def get_test_type_strain_delta_list(cryst_sys):
         test_type_list = ["c11", "c22", "c33", "c44", "c55", "c66",
             "4c11-4c12-4c13+c22+2c23+c33", "c11-4c12+2c13+4c22-4c23+c33", "c11+2c12-4c13+c22-4c23+4c33"]
         strain_list = []
-        delta_list = np.ones(((9, 3))) * [0, -0.03, 0.03]
+        delta_list = np.ones(((9, 5))) * [0, -0.02, 0.02, -0.03, 0.03]
 
         strain_list.append(lambda delta: np.array([[1 + delta, 0, 0],
                                           [0, 1, 0],
@@ -147,6 +147,7 @@ def solve(cryst_sys, combined_econst_array):
 
 if __name__ == '__main__':
     filename = sys.argv[1]
+    subdirname = sys.argv[2]
     with open(filename) as f:
         run_spec = yaml.load(f)
     cryst_sys = run_spec['elastic']['cryst_sys']
@@ -155,24 +156,26 @@ if __name__ == '__main__':
     with open('properties.json', 'r') as f:
         properties = json.load(f)
 
+    V0 = properties['V0']
     (incar, kpoints) = read_incar_kpoints(run_spec)
     if not properties['is_mag']:
         incar.update({'ISPIN': 1})
     structure = generate_structure(run_spec)
-    structure.scale_lattice(properties['V0'])
+    structure.scale_lattice(V0)
 
-    chdir('elastic_run_energy')
+    chdir(subdirname)
     combined_econst_array = []
     for test_type, strain, delta in \
                 zip(*get_test_type_strain_delta_list(cryst_sys)):
         chdir(test_type)
         energy = np.zeros(len(delta))
-        energy[0] = properties['E0_equi-relax']
+        energy[0] = properties['E0']
         for ind, value in enumerate(delta[1:]):
             incar.write_file('INCAR')
             kpoints.write_file('KPOINTS')
             lattice_modified = mg.Lattice(
-                np.dot(structure.lattice_vectors(), strain(value)))
+                # np.dot(strain(value), structure.lattice_vectors() ) ) # anti
+                np.dot(structure.lattice_vectors(), strain(value))) # old
             structure_copy = structure.copy()
             structure_copy.modify_lattice(lattice_modified)
             structure_copy.to(filename='POSCAR')
@@ -184,7 +187,7 @@ if __name__ == '__main__':
         combined_econst_array.append(fitting_result['coeffs'][2])
         os.chdir('..')
 
-    combined_econst_array = np.array(combined_econst_array) * 160.2 / properties['V0']
+    combined_econst_array = np.array(combined_econst_array) * 160.2 / V0
     solved = solve(cryst_sys, combined_econst_array)
     with open('elastic.json', 'w') as f:
         json.dump(solved, f, indent=4)

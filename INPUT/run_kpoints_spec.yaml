@@ -1,4 +1,4 @@
-elem_types: [Sc_sv, N]
+elem_types: [Ti_pv, N]
 structure: rocksalt
 pot_type: PAW-PBE
 incar:
@@ -19,8 +19,8 @@ kpoints:
   mode: M
   divisions: [13, 13, 13]
 poscar:
-  template: POSCAR-rocksalt-primitive
-volume:
-  begin: 10
-  end:   20
-  sample_point_num: 5
+  template: POSCAR
+kpoints_change:
+  begin: 4
+  end:   12
+  sample_point_num: 2

@@ -1,0 +1,23 @@
+elem_types: [Ti_pv, N]
+structure: rocksalt
+pot_type: PAW-PBE
+incar:
+  ENCUT: 550
+  PREC: Normal
+  ISPIN: 2
+  SIGMA: 0.1
+  EDIFF: 1e-05
+  NSW: 20
+  IBRION: 6
+  SYMPREC: 1e-6
+  ISIF: 3
+  POTIM: 0.015
+  EDIFFG: -0.05
+  NPAR: 12
+  LCHARG: False
+  LWAVE: False
+kpoints:
+  mode: M
+  divisions: [7, 7, 7]
+poscar:
+  template: POSCAR-rocksalt-primitive

@@ -6,4 +6,4 @@ module load mkl
 
 cd $PBS_O_WORKDIR
 date
-python INPUT/run_volume.py INPUT/run_volume_spec.yaml
+python INPUT/run_kpoints.py INPUT/run_kpoints_spec.yaml

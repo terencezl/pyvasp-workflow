@@ -11,21 +11,27 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 import pymatgen as mg
-import pydass_vasp
 
-POTENTIAL_DATABASE = 'PATH-TO-YOUR-POTENTIAL-DATABASE'
-VASP = 'PATH-TO-YOUR-EXECUTABLE'
+POTENTIAL_DATABASE = '/nfs/02/utl0268/terencelz/local/POTENTIAL_DATABASE/'
+VASP = '/nfs/02/utl0268/terencelz/local/bin/vasp.5.3.3-oakley'
 
 template_dir = os.path.join(os.getcwd(), 'INPUT/')
+
+def chdir(dirname):
+    try:
+        os.makedirs(dirname)
+    except OSError:
+        if not os.path.isdir(dirname):
+            raise OSError
+    os.chdir(dirname)
+
 
 def enter_main_dir(run_spec):
     """
     enter the main run directory
     """
-    dirname = run_spec['structure'] + '-' + ','.join(run_spec['elem_types'])
-    if not os.path.isdir(dirname):
-        os.makedirs(dirname)
-    os.chdir(dirname)
+    dirname = run_spec['structure'] + '-' + '+'.join(run_spec['elem_types'])
+    chdir(dirname)
 
 
 def run_vasp():
@@ -33,19 +39,19 @@ def run_vasp():
     run mpi version of vasp
     """
     run = call('time mpiexec ' + VASP + ' | tee -a stdout', shell=True)
-    if run != 0:
-        raise RuntimeError("VASP run error!")
+    print('')
+    # if run != 0:
+        # raise RuntimeError("VASP run error!")
 
 
-def generate_incar_kpoints_potcar(run_spec):
+def read_incar_kpoints(run_spec):
     """
-    generate INCAR, KPOINTS and POTCAR
+    read INCAR and KPOINTS
     """
     # INCAR
     incar = mg.io.vaspio.Incar()
     if run_spec.has_key('incar') and run_spec['incar']:
         incar.update(run_spec['incar'])
-    incar.write_file('INCAR')
 
     # KPOINTS
     kpoints = mg.io.vaspio.Kpoints.monkhorst_automatic([11, 11, 11])
@@ -55,14 +61,19 @@ def generate_incar_kpoints_potcar(run_spec):
             kpoints = mg.io.vaspio.Kpoints.monkhorst_automatic(kpoints_spec['divisions'])
         elif kpoints_spec['mode'] == 'G':
             kpoints = mg.io.vaspio.Kpoints.gamma_automatic(kpoints_spec['divisions'])
-    kpoints.write_file('KPOINTS')
+    return incar, kpoints
 
-    # POTCAR
-    POTENTIAL_BASE = os.path.join(POTENTIAL_DATABASE, run_spec['pot_type'], 'POTCAR_')
+
+def write_potcar(run_spec):
+    """
+    write POTCAR
+    """
+    potential_base = os.path.join(POTENTIAL_DATABASE, run_spec['pot_type'], 'POTCAR_')
     with open('POTCAR', 'wb') as outfile:
-        for filename in [POTENTIAL_BASE + e for e in run_spec['elem_types']]:
+        for filename in [potential_base + e for e in run_spec['elem_types']]:
             with open(filename, 'rb') as infile:
                 shutil.copyfileobj(infile, outfile)
+
 
 def generate_structure(run_spec):
     """

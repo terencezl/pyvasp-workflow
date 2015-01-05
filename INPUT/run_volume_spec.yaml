@@ -1,10 +1,11 @@
-elem_types: [Sc_sv, N]
-structure: rocksalt
+elem_types: [Ti_pv]
+structure: hcp
 pot_type: PAW-PBE
 incar:
   ENCUT: 400
   PREC: Normal
   ISPIN: 2
+  ISMEAR: 1
   SIGMA: 0.1
   EDIFF: 1e-05
   NSW: 20
@@ -17,10 +18,10 @@ incar:
   LWAVE: False
 kpoints:
   mode: M
-  divisions: [13, 13, 13]
+  divisions: [11, 11, 7]
 poscar:
-  template: POSCAR-rocksalt-primitive
+  template: POSCAR-hcp
 volume:
-  begin: 10
-  end:   20
+  begin: 20
+  end:   40
   sample_point_num: 5

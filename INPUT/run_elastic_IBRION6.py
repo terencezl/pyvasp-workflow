@@ -26,11 +26,11 @@ if __name__ == '__main__':
     if not properties['is_mag']:
         incar.update({'ISPIN': 1})
     structure = generate_structure(run_spec)
+    structure.scale_lattice(properties['V0'])
 
     chdir(subdirname)
     incar.write_file('INCAR')
     kpoints.write_file('KPOINTS')
-    structure.scale_lattice(properties['V0'])
     structure.to(filename='POSCAR')
     write_potcar(run_spec)
     run_vasp()

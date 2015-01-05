@@ -22,6 +22,7 @@ if __name__ == '__main__':
     enter_main_dir(run_spec)
     (incar, kpoints) = read_incar_kpoints(run_spec)
     structure = generate_structure(run_spec)
+    structure.scale_lattice(properties['V0'])
     kpoint_params = run_spec['kpoints_change']
     kpoints_change = np.linspace(kpoint_params['begin'], kpoint_params['end'], kpoint_params['sample_point_num'])
     energy = np.zeros(len(kpoints_change))

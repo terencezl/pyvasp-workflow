@@ -1,6 +1,5 @@
 import os
 import sys
-import shutil
 import json
 import yaml
 import numpy as np
@@ -18,19 +17,15 @@ def volume_loop_fitting(run_spec, (incar, kpoints, structure), (volume, energy, 
     loop over a set of volumes
     """
     for i, V in enumerate(volume):
-        # volume_str = '{:.2f}'.format(V)
-        # chdir(volume_str)
         incar.write_file('INCAR')
         kpoints.write_file('KPOINTS')
         structure.scale_lattice(V)
         structure.to(filename='POSCAR')
         write_potcar(run_spec)
         run_vasp()
-        # energy[i] = mg.io.vaspio.Vasprun('vasprun.xml', parse_dos=False, parse_eigen=False).final_energy
         oszicar = mg.io.vaspio.Oszicar('OSZICAR')
         energy[i] = oszicar.final_energy
         mag[i] = oszicar.ionic_steps[-1]['mag']
-        # os.chdir('..')
 
     fitting_params = pydass_vasp.fitting.eos_fit(volume, energy, save_figs=True)['parameters']
     with open('fitting_params.json', 'w') as f:
@@ -58,40 +53,36 @@ if __name__ == '__main__':
     structure = generate_structure(run_spec)
     properties = {}
 
-    # first round
     chdir(subdirname)
+    iterations = []
     volume_params = run_spec['volume']
     volume = np.linspace(volume_params['begin'], volume_params['end'], volume_params['sample_point_num'])
     energy = np.zeros(len(volume))
     mag = np.zeros(len(volume))
     fitting_params = volume_loop_fitting(run_spec, (incar, kpoints, structure), (volume, energy, mag))
-    os.chdir('..')
+    iterations.append(str(volume))
     is_mag = detect_is_mag(mag)
     if not is_mag:
         incar.update({'ISIF': 1})
 
-    # second round
     V0 = fitting_params['V0']
     V0_ralative_pos = (V0 - volume_params['begin']) / (volume_params['end'] - volume_params['begin'])
-    is_V0_within_valley = bool(V0_ralative_pos > 0.4 and V0_ralative_pos < 0.6)
+    is_V0_within_valley = V0_ralative_pos > 0.4 and V0_ralative_pos < 0.6
 
-    if not is_V0_within_valley:
-        chdir(subdirname)
+    while not is_V0_within_valley:
         V_begin = V0 * 9./10
         V_end = V0 * 11./10
         volume = np.linspace(V_begin, V_end, 5)
         energy = np.zeros(len(volume))
         mag = np.zeros(len(volume))
         fitting_params = volume_loop_fitting(run_spec, (incar, kpoints, structure), (volume, energy, mag))
-        os.chdir('..')
+        iterations.append(str(volume))
         is_mag = detect_is_mag(mag)
 
         V0 = fitting_params['V0']
         V0_ralative_pos = (V0 - V_begin) / (V_end - V_begin)
-        is_V0_within_valley = bool(V0_ralative_pos > 0.4 and V0_ralative_pos < 0.6)
+        is_V0_within_valley = V0_ralative_pos > 0.4 and V0_ralative_pos < 0.6
 
-    # equi_relax
-    chdir(subdirname)
     incar.write_file('INCAR')
     kpoints.write_file('KPOINTS')
     structure.scale_lattice(V0)
@@ -101,10 +92,12 @@ if __name__ == '__main__':
     oszicar = mg.io.vaspio.Oszicar('OSZICAR')
     energy = oszicar.final_energy
     mag = oszicar.ionic_steps[-1]['mag']
-    os.chdir('..')
     is_mag = detect_is_mag(mag)
 
-    properties.update({'is_V0_within_valley': is_V0_within_valley})
+    with open('iterations.txt', 'w') as f:
+        f.write('\n'.join(iterations))
+    os.chdir('..')
+
     properties.update(fitting_params)
     properties.update({'E0': energy, 'is_mag': is_mag})
     if is_mag:

@@ -39,9 +39,8 @@ def run_vasp():
     run mpi version of vasp
     """
     run = call('time mpiexec ' + VASP + ' | tee -a stdout', shell=True)
-    print('='*100)
-    # if run != 0:
-        # raise RuntimeError("VASP run error!")
+    hbreak = '=' * 100
+    call('echo -e "\n' + hbreak + '" | tee -a stdout', shell=True)
 
 
 def read_incar_kpoints(run_spec):
@@ -106,6 +105,11 @@ def generate_structure(run_spec):
     else:
         lattice = mg.Lattice.orthorhombic(lattice_params['a'], lattice_params['b'], lattice_params['c'],
             lattice_params['alpha'], lattice_params['beta'], lattice_params['gamma'])
+
+    elem_types_struct_multi = []
+    for i, elem in enumerate(elem_types_struct):
+        elem_types_struct_multi.extend([elem] * poscar_dict['atoms_multi'][i])
+
     structure = mg.Structure.from_spacegroup(poscar_dict['spacegroup'], lattice,
-            elem_types_struct, poscar_dict['atom_locs_direct']).get_primitive_structure()
+            elem_types_struct_multi, poscar_dict['atoms_direct_locs'])
     return structure

@@ -1,10 +1,11 @@
-elem_types: [Ti_pv, N]
-structure: rocksalt
+elem_types: [Si]
+structure: diamond
 pot_type: PAW-PBE
 incar:
   ENCUT: 550
   PREC: Normal
   ISPIN: 2
+  ISMEAR: 1
   SIGMA: 0.1
   EDIFF: 1e-05
   NSW: 20
@@ -20,4 +21,4 @@ kpoints:
   mode: M
   divisions: [7, 7, 7]
 poscar:
-  template: POSCAR-rocksalt-primitive
+  template: POSCAR-diamond-primitive

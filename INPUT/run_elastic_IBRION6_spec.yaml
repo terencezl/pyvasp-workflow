@@ -1,5 +1,5 @@
-elem_types: [Si]
-structure: diamond
+elem_types: [Ti_pv, N]
+structure: wurtzite
 pot_type: PAW-PBE
 incar:
   ENCUT: 550
@@ -19,6 +19,6 @@ incar:
   LWAVE: False
 kpoints:
   mode: M
-  divisions: [7, 7, 7]
+  divisions: [15, 15, 9]
 poscar:
-  template: POSCAR-diamond-primitive
+  template: POSCAR-wurtzite

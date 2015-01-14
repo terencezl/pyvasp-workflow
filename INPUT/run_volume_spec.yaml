@@ -1,5 +1,5 @@
-elem_types: [Ti_pv]
-structure: hcp
+elem_types: [Ti_pv, N]
+structure: wurtzite
 pot_type: PAW-PBE
 incar:
   ENCUT: 400
@@ -18,10 +18,10 @@ incar:
   LWAVE: False
 kpoints:
   mode: M
-  divisions: [11, 11, 7]
+  divisions: [15, 15, 9]
 poscar:
-  template: POSCAR-hcp
+  template: POSCAR-wurtzite
 volume:
-  begin: 20
-  end:   40
+  begin: 35
+  end:   45
   sample_point_num: 5

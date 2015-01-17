@@ -14,7 +14,7 @@ import pymatgen as mg
 POTENTIAL_DATABASE = 'PATH-TO-YOUR-POTENTIAL-DATABASE'
 VASP = 'PATH-TO-YOUR-EXECUTABLE'
 
-template_dir = os.path.join(os.getcwd(), 'INPUT/')
+template_dir = os.path.join(os.getcwd(), 'INPUT/TEMPLATES')
 
 
 def fileload(filename):
@@ -298,7 +298,7 @@ def solve(cryst_sys, combined_econst_array):
 
 def detect_is_mag(mag):
     if isinstance(mag, np.ndarray):
-        is_mag = (mag > 0.005).all()
+        is_mag = (np.abs(mag) >= 0.001).any()
     elif isinstance(mag, float) or isinstance(mag, int):
-        is_mag = mag > 0.005
+        is_mag = np.abs(mag) >= 0.001
     return is_mag

@@ -41,6 +41,7 @@ if __name__ == '__main__':
         oszicar = mg.io.vaspio.Oszicar('OSZICAR')
         energy[i] = oszicar.final_energy
 
+    energy /= structure.num_sites
     plt.plot(kpoints_change[:, 0], energy, 'o')
     plt.xlabel('KP1')
     plt.ylabel('Energy (eV)')

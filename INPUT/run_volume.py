@@ -19,7 +19,9 @@ def volume_loop_fitting(run_spec, (incar, kpoints, structure), (volume, energy, 
         incar.write_file('INCAR')
         kpoints.write_file('KPOINTS')
         structure.scale_lattice(V)
-        structure.to(filename='POSCAR')
+        # structure.to(filename='POSCAR')
+        poscar = mg.io.vaspio.Poscar(structure, selective_dynamics=[[0, 0, 0]] + [[1,1,1]]*(structure.num_sites-1))
+        poscar.write_file('POSCAR')
         write_potcar(run_spec)
         run_vasp()
         oszicar = mg.io.vaspio.Oszicar('OSZICAR')
@@ -41,12 +43,14 @@ if __name__ == '__main__':
     filename = sys.argv[1]
     subdirname = sys.argv[2]
     run_spec = fileload(filename)
-
     is_mag = run_spec['incar']['ISPIN'] == 2
+
     enter_main_dir(run_spec)
     (incar, kpoints) = read_incar_kpoints(run_spec)
     structure = generate_structure(run_spec)
     properties = {}
+    # properties = fileload('properties.json')
+    # V0 = properties['V0']
 
     chdir(subdirname)
     iterations = []
@@ -54,6 +58,9 @@ if __name__ == '__main__':
 
     volume_params = run_spec['volume']
     volume = np.linspace(volume_params['begin'], volume_params['end'], volume_params['sample_point_num'])
+    # V_begin = V0 * 9./10
+    # V_end = V0 * 11./10
+    # volume = np.linspace(V_begin, V_end, 5)
     energy = np.zeros(len(volume))
     mag = np.zeros(len(volume))
     fitting_params, r_squared = volume_loop_fitting(run_spec, (incar, kpoints, structure), (volume, energy, mag), is_mag)
@@ -65,12 +72,13 @@ if __name__ == '__main__':
 
     V0 = fitting_params['V0']
     V0_ralative_pos = (V0 - volume_params['begin']) / (volume_params['end'] - volume_params['begin'])
+    # V0_ralative_pos = (V0 - V_begin) / (V_end - V_begin)
     is_V0_within_valley = V0_ralative_pos > 0.4 and V0_ralative_pos < 0.6
 
     while not (is_V0_within_valley and (volume[-1] - volume[0])/V0 < 0.25 and (energy < 0).all()):
         V_begin = V0 * 9./10
         V_end = V0 * 11./10
-        volume = np.linspace(V_begin, V_end, 5)
+        volume = np.linspace(V_begin, V_end, 6)
         energy = np.zeros(len(volume))
         mag = np.zeros(len(volume))
         fitting_params, r_squared = volume_loop_fitting(run_spec, (incar, kpoints, structure), (volume, energy, mag), is_mag)
@@ -87,7 +95,8 @@ if __name__ == '__main__':
     incar.write_file('INCAR')
     kpoints.write_file('KPOINTS')
     structure.scale_lattice(V0)
-    structure.to(filename='POSCAR')
+    poscar = mg.io.vaspio.Poscar(structure, selective_dynamics=[[0, 0, 0]] + [[1,1,1]]*(structure.num_sites-1))
+    poscar.write_file('POSCAR')
     write_potcar(run_spec)
     run_vasp()
     oszicar = mg.io.vaspio.Oszicar('OSZICAR')

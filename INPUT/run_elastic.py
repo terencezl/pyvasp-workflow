@@ -19,8 +19,8 @@ if __name__ == '__main__':
     subdirname = sys.argv[2]
     run_spec = fileload(filename)
     cryst_sys = run_spec['poscar']['cryst_sys']
-    enter_main_dir(run_spec)
 
+    enter_main_dir(run_spec)
     properties = fileload('properties.json')
     V0 = properties['V0']
     is_mag = detect_is_mag(properties['mag'])

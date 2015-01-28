@@ -1,0 +1,29 @@
+elem_types: [Ti_pv, N]
+structure: ZnS
+run_subdir: run_test
+pot_type: PAW_PBE
+incar:
+  ENCUT: 400
+  PREC: Normal
+  ISPIN: 1
+  ISMEAR: 1
+  SIGMA: 0.1
+  EDIFF: 1e-06
+  NSW: 20
+  IBRION: 2
+  ISIF: 4
+  POTIM: 0.1
+  # IBRION: 6
+  # SYMPREC: 1e-6
+  # ISIF: 3
+  # POTIM: 0.015
+  EDIFFG: -0.05
+  NPAR: 4
+  # NPAR: 12
+  LCHARG: False
+  LWAVE: False
+kpoints:
+  mode: M
+  divisions: [13, 13, 7]
+poscar:
+  template: POSCAR-ZnS

@@ -4,32 +4,34 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-plt.style.use('ggplot')
 import pymatgen as mg
-from run_module import detect_is_mag, fileload, filedump, chdir, enter_main_dir, run_vasp, read_incar_kpoints, write_potcar, generate_structure
+from run_module import rm_stdout, detect_is_mag, fileload, filedump, chdir, enter_main_dir, run_vasp, read_incar_kpoints, write_potcar, generate_structure
 
 
 if __name__ == '__main__':
     filename = sys.argv[1]
-    subdirname = sys.argv[2]
     run_spec = fileload(filename)
 
     enter_main_dir(run_spec)
-    properties = fileload('properties.json')
+    shutil.move('../../' + filename, './')
+    rm_stdout()
+    properties = fileload('../properties.json')
     (incar, kpoints) = read_incar_kpoints(run_spec)
     if not detect_is_mag(properties['mag']):
         incar.update({'ISPIN': 1})
 
-    if os.path.isfile('POSCAR'):
-        structure = mg.Structure.from_file('POSCAR')
+    if os.path.isfile('../POSCAR'):
+        structure = mg.Structure.from_file('../POSCAR')
     else:
         structure = generate_structure(run_spec)
         structure.scale_lattice(properties['V0'])
 
-    kpoint_params = run_spec['kpoints_change']
-    kpoints_change = np.array([range(kpoint_params['begin'][i], kpoint_params['end'][i], kpoint_params['step']) for i in range(3)]).T
+    kpoints_params = run_spec['kpoints_change']
+    if isinstance(kpoints_params, dict):
+        kpoints_change = np.array([range(kpoints_params['begin'][i], kpoints_params['end'][i], kpoints_params['step']) for i in range(3)]).T
+    elif isinstance(kpoints_params, list):
+        kpoints_change = kpoints_params
     energy = np.zeros(len(kpoints_change))
-    chdir(subdirname)
 
     for i, kp in enumerate(kpoints_change):
         incar.write_file('INCAR')
@@ -56,5 +58,3 @@ if __name__ == '__main__':
     plt.savefig('energy_relative-kps.pdf')
     plt.close()
     np.savetxt('energy_relative-kps.txt', np.column_stack((kpoints_change[1:], energy_relative)), '%12.4f', header='kp1 kp2 kp3 energy_relative')
-
-    os.chdir('..')

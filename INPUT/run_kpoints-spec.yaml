@@ -1,10 +1,11 @@
 elem_types: [Cr_pv, N]
 structure: NiAs
-pot_type: PAW-PBE
+run_subdir: run_kpoints
+pot_type: PAW_PBE
 incar:
   ENCUT: 400
   PREC: Normal
-  ISPIN: 4
+  ISPIN: 2
   ISMEAR: 1
   SIGMA: 0.1
   EDIFF: 1e-05
@@ -21,7 +22,4 @@ kpoints:
   divisions: [9, 9, 5]
 poscar:
   template: POSCAR-NiAs
-kpoints_change:
-  begin: [9, 9, 5]
-  end:   [17, 17, 13]
-  step: 2
+kpoints_change: [[9, 9, 5], [11, 11, 7], [13, 13, 7], [15, 15, 9], [17, 17, 9]]

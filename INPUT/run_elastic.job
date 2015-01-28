@@ -1,9 +1,0 @@
-#PBS -l walltime=02:00:00
-#PBS -l nodes=1:ppn=12
-#PBS -j oe
-
-module load mkl
-
-cd $PBS_O_WORKDIR
-date
-python INPUT/run_elastic.py INPUT/run_elastic_spec.yaml run_elastic

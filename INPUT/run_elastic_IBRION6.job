@@ -1,9 +1,0 @@
-#PBS -l walltime=00:30:00
-#PBS -l nodes=1:ppn=12
-#PBS -j oe
-
-module load mkl
-
-cd $PBS_O_WORKDIR
-date
-python INPUT/run_elastic_IBRION6.py INPUT/run_elastic_IBRION6_spec.yaml run_elastic_IBRION6

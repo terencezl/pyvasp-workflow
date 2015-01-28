@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 from subprocess import call
 import re
@@ -9,6 +10,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
+plt.rcParams['figure.figsize'] = [5, 4]
 import pymatgen as mg
 
 POTENTIAL_DATABASE = 'PATH-TO-YOUR-POTENTIAL-DATABASE'
@@ -45,21 +47,30 @@ def chdir(dirname):
     os.chdir(dirname)
 
 
+def rm_stdout():
+    if os.path.isfile('stdout'):
+        os.remove('stdout')
+
+
 def enter_main_dir(run_spec):
     """
-    Enter the main run directory.
+    Enter the run directory.
     """
     dirname = run_spec['structure'] + '-' + '+'.join(run_spec['elem_types'])
-    chdir(dirname)
+    chdir(os.path.join(dirname, run_spec['run_subdir']))
 
 
 def run_vasp():
     """
     Run mpi version of vasp.
     """
-    run = call('time mpiexec ' + VASP + ' | tee -a stdout', shell=True)
-    hbreak = '=' * 100
-    call('echo -e "\n' + hbreak + '" | tee -a stdout', shell=True)
+    time_format = ' "\n----------\nreal     %E" '
+    time = '/usr/bin/time -f ' + time_format
+    run = call(time + VASP + ' 2>&1 | tee -a stdout', shell=True)
+    if run != 0:
+        sys.exit(1)
+    hbreak = ' "\n' + '=' * 100 + '\n" '
+    call('echo -e ' + hbreak + ' | tee -a stdout', shell=True)
 
 
 def read_incar_kpoints(run_spec):
@@ -86,9 +97,9 @@ def write_potcar(run_spec):
     """
     Write POTCAR.
     """
-    potential_base = os.path.join(POTENTIAL_DATABASE, run_spec['pot_type'], 'POTCAR_')
+    potential_base = os.path.join(POTENTIAL_DATABASE, run_spec['pot_type'])
     with open('POTCAR', 'wb') as outfile:
-        for filename in [potential_base + e for e in run_spec['elem_types']]:
+        for filename in [os.path.join(potential_base, e, 'POTCAR') for e in run_spec['elem_types']]:
             with open(filename, 'rb') as infile:
                 shutil.copyfileobj(infile, outfile)
 
@@ -143,6 +154,7 @@ def get_test_type_strain_delta_list(cryst_sys):
     if cryst_sys == 'cubic':
         test_type_list = ["c11+2c12", "c11-c12", "c44"]
         delta_list = np.ones(((3, 5))) * [0, -0.02, 0.02, -0.03, 0.03]
+        delta_list *= 2
         delta_list[0] = delta_list[0]/np.sqrt(3)
 
         strain_list.append(lambda delta: np.array([[1 + delta, 0, 0],
@@ -158,11 +170,12 @@ def get_test_type_strain_delta_list(cryst_sys):
                                                    [0, 0, 1 + delta ** 2 / (4 - delta ** 2)]]))
 
     elif cryst_sys == 'hexagonal':
-        test_type_list = ["c11+2c13+c33", "c11-c12", "c11+c12", "c44", "c33"]
+        test_type_list = ["2c11+2c12+4c13+c33", "c11-c12", "c11+c12", "c44", "c33"]
         delta_list = np.ones(((5, 5))) * [0, -0.02, 0.02, -0.03, 0.03]
+        delta_list *= 2
 
         strain_list.append(lambda delta: np.array([[1 + delta, 0, 0],
-                                                   [0, 1, 0],
+                                                   [0, 1 + delta, 0],
                                                    [0, 0, 1 + delta]]))
 
         strain_list.append(lambda delta: np.array([[1 + delta, 0, 0],
@@ -265,7 +278,7 @@ def solve(cryst_sys, combined_econst_array):
 
     elif cryst_sys == 'hexagonal':
         econsts_str = ["C11", "C12", "C13", "C33", "C44"]
-        coeff_matrix = np.array([[1/2., 0, 1, 1/2., 0],
+        coeff_matrix = np.array([[1, 1, 2, 1/2., 0],
                                  [1, -1, 0, 0, 0],
                                  [1, 1, 0, 0, 0],
                                  [0, 0, 0, 0, 2],

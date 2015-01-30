@@ -3,6 +3,8 @@
 #PBS -j oe
 
 module load mkl
+module use $HOME/terencelz/local/share/modulefiles
+module load anaconda
 
 cd $PBS_O_WORKDIR
 date

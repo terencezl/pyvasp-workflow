@@ -15,7 +15,7 @@ for st in NiAs; do
     # for i in Rh_pv Pd Ag Os Ir Pt Au; do
     for elem in Mn_pv; do
         job=${st}-${elem}
-        suffix=${st}-${elem}_`date +%F-%T`
+        suffix=${job}_`date +%F-%T`
         task_spec_suffixed=${task}-spec_${suffix}.yaml
         python -c "
 import os
@@ -23,7 +23,7 @@ os.chdir('INPUT')
 from run_module import fileload, filedump
 run_spec = fileload('${task}-spec.yaml')
 run_spec['structure'] = '$st'
-run_spec['elem_types'] = ['$i', 'N']
+run_spec['elem_types'] = ['$elem', 'N']
 run_spec['run_subdir'] = '${subdirname}'
 run_spec['poscar']['template'] = 'POSCAR-${st}'
 filedump(run_spec, '../${task_spec_suffixed}')

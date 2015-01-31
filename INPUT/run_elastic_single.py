@@ -16,10 +16,11 @@ if __name__ == '__main__':
     filename = sys.argv[1]
     test_type_input = sys.argv[2]
     run_spec = fileload(filename)
+    os.remove(filename)
     cryst_sys = run_spec['poscar']['cryst_sys']
 
     enter_main_dir(run_spec)
-    shutil.move('../../' + filename, './')
+    filedump(run_spec, filename)
     properties = fileload('../properties.json')
 
     V0 = properties['V0']
@@ -30,6 +31,8 @@ if __name__ == '__main__':
 
     if os.path.isfile('../POSCAR'):
         structure = mg.Structure.from_file('../POSCAR')
+    elif os.path.isfile('nostrain/CONTCAR'):
+        structure = mg.Structure.from_file('nonstrain/CONTCAR')
     else:
         structure = generate_structure(run_spec)
         structure.scale_lattice(V0)

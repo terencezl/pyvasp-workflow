@@ -9,14 +9,14 @@ shift 1
 for i in 7 9 11 13 15 17 19 21 23; do
     # for j in 6 12; do
         job=$i
-        suffix=${i}_`date +%F-%T`
+        suffix=${job}_`date +%F-%T`
         task_spec_suffixed=${task}-spec_${suffix}.yaml
         python -c "
 import os
 os.chdir('INPUT')
 from run_module import fileload, filedump
 run_spec = fileload('${task}-spec.yaml')
-run_spec['run_subdir'] = '${task}_$i'
+run_spec['run_subdir'] = '${task}_${job}'
 run_spec['kpoints']['divisions'] = [$i, $i, $i]
 filedump(run_spec, '../${task_spec_suffixed}')
         "

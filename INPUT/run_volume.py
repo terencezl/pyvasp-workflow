@@ -10,6 +10,7 @@ from run_module import rm_stdout, detect_is_mag, fileload, filedump, chdir, ente
 
 
 def volume_fitting(run_spec, (incar, kpoints, structure), (V_begin, V_end, V_sample_point_num), is_mag, iterations):
+    poscars = []
     volume = np.linspace(V_begin, V_end, V_sample_point_num)
     energy = np.zeros(len(volume))
     mag = np.zeros(len(volume))
@@ -23,6 +24,7 @@ def volume_fitting(run_spec, (incar, kpoints, structure), (V_begin, V_end, V_sam
         oszicar = mg.io.vaspio.Oszicar('OSZICAR')
         energy[i] = oszicar.final_energy
         structure = mg.Structure.from_file('CONTCAR')
+        poscars.append(structure.to_dict)
         if is_mag:
             mag[i] = oszicar.ionic_steps[-1]['mag']
 
@@ -42,20 +44,30 @@ def volume_fitting(run_spec, (incar, kpoints, structure), (V_begin, V_end, V_sam
     is_all_energy_positive = (energy < 0).all()
     is_well_fitted = (is_V0_within_valley and is_range_proportional and is_all_energy_positive)
 
-    return is_well_fitted, V0, structure, is_mag, fitting_result
+    return is_well_fitted, V0, structure, is_mag, fitting_result, poscars
 
 
 if __name__ == '__main__':
     filename = sys.argv[1]
     run_spec = fileload(filename)
+    os.remove(filename)
     is_mag = run_spec['incar']['ISPIN'] == 2
 
     enter_main_dir(run_spec)
-    shutil.move('../../' + filename, './')
+    filedump(run_spec, filename)
     rm_stdout()
+
+    # for solution runs
+    if run_spec.has_key('solution') and run_spec['solution'].has_key('ratio'):
+        ratio = str(run_spec['solution']['ratio'])
+        ratio_list = [float(i) for i in ratio.split('-')]
+        if ratio_list[0] == 0 and ratio_list[1] == 1:
+            run_spec['elem_types'] = [run_spec['elem_types'][1], run_spec['elem_types'][2]]
+        elif ratio_list[0] == 1 and ratio_list[1] == 0:
+            run_spec['elem_types'] = [run_spec['elem_types'][0], run_spec['elem_types'][2]]
+
     (incar, kpoints) = read_incar_kpoints(run_spec)
     structure = generate_structure(run_spec)
-
     volume_params = run_spec['volume']
     V_sample_point_num = volume_params['sample_point_num']
     iterations = []
@@ -71,14 +83,14 @@ if __name__ == '__main__':
         V_end = volume_params['end']
 
     # first round
-    is_well_fitted, V0, structure, is_mag, fitting_result = \
+    is_well_fitted, V0, structure, is_mag, fitting_result, poscars = \
             volume_fitting(run_spec, (incar, kpoints, structure), (V_begin, V_end, V_sample_point_num), is_mag, iterations)
 
     # possible next rounds
     while not is_well_fitted:
         V_begin = V0 * 9./10
         V_end = V0 * 11./10
-        is_well_fitted, V0, structure, is_mag, fitting_result = \
+        is_well_fitted, V0, structure, is_mag, fitting_result, poscars = \
                 volume_fitting(run_spec, (incar, kpoints, structure), (V_begin, V_end, V_sample_point_num), is_mag, iterations)
 
     # equilibrium volume relaxation run
@@ -99,10 +111,15 @@ if __name__ == '__main__':
     # record keeping
     fitting_result['iterations'] = iterations
     filedump(fitting_result, 'fitting_result.json')
-    shutil.copy('CONTCAR', '../POSCAR')
 
     fitting_result.pop('r_squared')
     fitting_result.pop('iterations')
     properties.update(fitting_result)
     properties.update({'E0': energy, 'mag': mag})
+    if run_spec.has_key('phonopy'):
+        properties.update({'volume': iterations[-1]['volume'], 'energy': iterations[-1]['energy'], 'poscars': poscars})
+        e_v_dat = np.column_stack((iterations[-1]['volume'], iterations[-1]['energy']))
+        np.savetxt('e-v.dat', e_v_dat, '%15.6f', header='volume energy')
     filedump(properties, '../properties.json')
+
+    shutil.copy('CONTCAR', '../POSCAR')

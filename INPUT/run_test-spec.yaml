@@ -18,7 +18,8 @@ incar:
   # ISIF: 3
   # POTIM: 0.015
   EDIFFG: -0.05
-  NPAR: 4
+  KPAR: 3
+  NPAR: 1
   # NPAR: 12
   LCHARG: False
   LWAVE: False

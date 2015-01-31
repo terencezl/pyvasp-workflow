@@ -1,11 +1,11 @@
 elem_types: [Ti_pv, N]
-structure: wurtzite
+structure: ZnS
 run_subdir: run_volume
 pot_type: PAW_PBE
 incar:
   ENCUT: 400
   PREC: Normal
-  NBANDS: 24
+  # NBANDS: 24
   ISPIN: 1
   ISMEAR: 1
   SIGMA: 0.1
@@ -15,14 +15,15 @@ incar:
   ISIF: 4
   POTIM: 0.1
   EDIFFG: -0.01
-  NPAR: 4
+  KPAR: 3
+  NPAR: 1
   LCHARG: False
   LWAVE: False
 kpoints:
   mode: M
   divisions: [13, 13, 7]
 poscar:
-  template: POSCAR-wurtzite
+  template: POSCAR-ZnS
 volume:
   begin: 40
   end:   60

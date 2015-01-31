@@ -145,6 +145,14 @@ def generate_structure(run_spec):
     return structure
 
 
+def detect_is_mag(mag):
+    if isinstance(mag, np.ndarray):
+        is_mag = (np.abs(mag) >= 0.001).any()
+    elif isinstance(mag, float) or isinstance(mag, int):
+        is_mag = np.abs(mag) >= 0.001
+    return is_mag
+
+
 def get_test_type_strain_delta_list(cryst_sys):
     """
     Generate elastic strain.
@@ -307,11 +315,3 @@ def solve(cryst_sys, combined_econst_array):
 
     solved = np.linalg.solve(coeff_matrix, combined_econst_array)
     return dict(zip(econsts_str, solved))
-
-
-def detect_is_mag(mag):
-    if isinstance(mag, np.ndarray):
-        is_mag = (np.abs(mag) >= 0.001).any()
-    elif isinstance(mag, float) or isinstance(mag, int):
-        is_mag = np.abs(mag) >= 0.001
-    return is_mag

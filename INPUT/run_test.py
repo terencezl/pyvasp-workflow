@@ -1,5 +1,6 @@
 import os
 import sys
+import shutil
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
@@ -10,8 +11,9 @@ from run_module import rm_stdout, detect_is_mag, fileload, filedump, chdir, ente
 if __name__ == '__main__':
     filename = sys.argv[1]
     run_spec = fileload(filename)
+    os.remove(filename)
     enter_main_dir(run_spec)
-    shutil.move('../../' + filename, './')
+    filedump(run_spec, filename)
     rm_stdout()
     (incar, kpoints) = read_incar_kpoints(run_spec)
     incar.write_file('INCAR')

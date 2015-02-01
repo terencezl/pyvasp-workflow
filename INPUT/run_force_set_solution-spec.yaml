@@ -23,3 +23,5 @@ phonopy:
   mp: [31, 31, 31]
   tmax: 1400
   tstep: 5
+solution:
+  ratio: 0.0-1.0

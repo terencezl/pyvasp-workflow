@@ -6,16 +6,26 @@ if [[ -z $task ]]; then
 fi
 shift 1
 
+if [[ "$1" ]]; then
+    task_spec="$1"-spec.yaml
+    shift 1
+else
+    task_spec=${task}-spec.yaml
+fi
+
+other_args="$@"
+
+job=$task
 suffix=`date +%F-%T`
-task_spec_suffixed=${task}-spec_$suffix.yaml
+task_spec_suffixed=${task_spec%-spec.yaml}-spec_${suffix}.yaml
 python -c "
 import os
 os.chdir('INPUT')
 from run_module import fileload, filedump
-run_spec = fileload('${task}-spec.yaml')
+run_spec = fileload('${task_spec}')
 filedump(run_spec, '../${task_spec_suffixed}')
 "
-cp INPUT/deploy.job $task
-sed -i "/python/c python INPUT/${task}.py $task_spec_suffixed $@" $task
-qsub $task
-rm $task
+cp INPUT/deploy.job $job
+sed -i "/python/c python INPUT/${task}.py $task_spec_suffixed $other_args" $job
+qsub $job
+rm $job

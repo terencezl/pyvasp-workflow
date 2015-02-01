@@ -1,4 +1,4 @@
-elem_types: [Ti_pv, N]
+elem_types: [Ti_sv, N]
 structure: ZnS
 run_subdir: run_test
 pot_type: PAW_PBE
@@ -13,14 +13,9 @@ incar:
   IBRION: 2
   ISIF: 4
   POTIM: 0.1
-  # IBRION: 6
-  # SYMPREC: 1e-6
-  # ISIF: 3
-  # POTIM: 0.015
-  EDIFFG: -0.05
+  EDIFFG: -0.01
   KPAR: 3
   NPAR: 1
-  # NPAR: 12
   LCHARG: False
   LWAVE: False
 kpoints:

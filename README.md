@@ -1,4 +1,4 @@
-VASP-routines-with-pymatgen
+pyvasp-routines
 ===========================
 
 A programmatic workflow of defining, submitting and analyzing VASP run routines with pymatgen, very robust and flexible.

@@ -19,8 +19,6 @@ incar:
 kpoints:
   mode: M
   divisions: [9, 9, 5]
-solution:
-  ratio: 0.0-1.0
 phonopy:
   dim: [1, 1, 1]
   mp: [31, 31, 31]

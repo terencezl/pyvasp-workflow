@@ -1,12 +1,11 @@
-elem_types: [Mn_pv, N]
-structure: WC
+elem_types: [Ti_sv, N]
+structure: rocksalt-conventional
 run_subdir: run_elastic
 pot_type: PAW_PBE
 incar:
   ENCUT: 400
   PREC: Normal
   ISPIN: 2
-  # MAGMOM: [2, 2]
   ISMEAR: 1
   SIGMA: 0.1
   EDIFF: 1e-06
@@ -23,5 +22,7 @@ kpoints:
   mode: M
   divisions: [19, 19, 9]
 poscar:
-  cryst_sys: hexagonal
-  template: POSCAR-WC
+  cryst_sys: cubic
+  template: POSCAR-rocksalt-conventional
+elastic:
+  test_type: c44

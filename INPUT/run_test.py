@@ -18,10 +18,10 @@ if __name__ == '__main__':
     (incar, kpoints) = read_incar_kpoints(run_spec)
     incar.write_file('INCAR')
     kpoints.write_file('KPOINTS')
-    if os.path.isfile('CONTCAR'):
+    if os.path.isfile('../POSCAR'):
+        structure = mg.Structure.from_file('../POSCAR')
+    elif os.path.isfile('CONTCAR'):
         structure = mg.Structure.from_file('CONTCAR')
-    elif os.path.isfile('POSCAR'):
-        structure = mg.Structure.from_file('POSCAR')
     else:
         structure = generate_structure(run_spec)
     structure.to(filename='POSCAR')

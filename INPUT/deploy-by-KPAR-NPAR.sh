@@ -6,6 +6,13 @@ if [[ -z $task ]]; then
 fi
 shift 1
 
+if [[ "$1" ]]; then
+    task_spec="$1"-spec.yaml
+    shift 1
+else
+    task_spec=${task}-spec.yaml
+fi
+
 other_args="$@"
 
 # for i in 1,1 1,2 1,4 1,6 1,12 2,1 2,2 2,3 2,4 3,1 3,2 3,4 3,8 4,1 4,2 4,3 4,6 6,1 6,2 6,4; do
@@ -15,13 +22,13 @@ for i in 12,1 12,2; do
     IFS=$OLDIFS
     job=${KPAR}-${NPAR}
     suffix=${job}_`date +%F-%T`
-    task_spec_suffixed=${task}-spec_${suffix}.yaml
+    task_spec_suffixed=${task_spec%-spec.yaml}-spec-${suffix}.yaml
     python -c "
 import os
 os.chdir('INPUT')
 from run_module import fileload, filedump
-run_spec = fileload('${task}-spec.yaml')
-run_spec['run_subdir'] = '${task}_${job}'
+run_spec = fileload('${task_spec}')
+run_spec['run_subdir'] += '-${job}'
 run_spec['incar']['KPAR'] = $KPAR
 run_spec['incar']['NPAR'] = $NPAR
 filedump(run_spec, '../${task_spec_suffixed}')

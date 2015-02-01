@@ -80,6 +80,8 @@ if __name__ == '__main__':
         combined_econst_array.append(fitting_result['params'][0])
         fitting_result['params'] = fitting_result['params'].tolist()
         fitting_result.pop('fitted_data')
+        fitting_result['delta'] = delta.tolist()
+        fitting_result['energy'] = energy.tolist()
         fitting_result['mag'] = mag.tolist()
         fitting_result_to_json[test_type] = fitting_result
         shutil.copy(test_type + '.pdf', '..')

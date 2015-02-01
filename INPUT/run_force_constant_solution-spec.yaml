@@ -1,6 +1,6 @@
 elem_types: [Ti_sv, V_sv, N]
 structure: rocksalt
-run_subdir: run_force_set
+run_subdir: run_force_constant
 pot_type: PAW_PBE
 incar:
   ENCUT: 500
@@ -9,9 +9,10 @@ incar:
   ISMEAR: 1
   SIGMA: 0.1
   EDIFF: 1e-08
-  NSW: 0
-  KPAR: 3
-  NPAR: 1
+  NSW: 1
+  IBRION: 8
+  KPAR: 6
+  NPAR: 2
   ADDGRID: True
   LCHARG: False
   LWAVE: False
@@ -23,3 +24,5 @@ phonopy:
   mp: [31, 31, 31]
   tmax: 1400
   tstep: 5
+solution:
+  ratio: 0.0-1.0

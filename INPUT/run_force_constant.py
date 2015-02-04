@@ -34,6 +34,10 @@ if __name__ == '__main__':
 
     (incar, kpoints) = read_incar_kpoints(run_spec)
     properties = fileload('../properties.json')
+    if detect_is_mag(properties['mag']):
+        incar.update({'ISPIN': 2})
+    else:
+        incar.update({'ISPIN': 1})
     volume = np.round(np.array(properties['volume']), 2)
     poscars = properties['poscars']
 

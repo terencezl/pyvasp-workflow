@@ -23,15 +23,17 @@ if __name__ == '__main__':
     filedump(run_spec, filename)
     properties = fileload('../properties.json')
     V0 = properties['V0']
-    is_mag = detect_is_mag(properties['mag'])
     (incar, kpoints) = read_incar_kpoints(run_spec)
-    if not is_mag:
+    is_mag = detect_is_mag(properties['mag'])
+    if is_mag:
+        incar.update({'ISPIN': 2})
+    else:
         incar.update({'ISPIN': 1})
 
     if os.path.isfile('../POSCAR'):
         structure = mg.Structure.from_file('../POSCAR')
     elif os.path.isfile('nostrain/CONTCAR'):
-        structure = mg.Structure.from_file('nonstrain/CONTCAR')
+        structure = mg.Structure.from_file('nostrain/CONTCAR')
     else:
         structure = generate_structure(run_spec)
         structure.scale_lattice(V0)

@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import pymatgen as mg
+import pydass_vasp
 from run_module import rm_stdout, detect_is_mag, fileload, filedump, chdir, enter_main_dir, run_vasp, read_incar_kpoints, write_potcar, generate_structure
 
 
@@ -27,3 +28,7 @@ if __name__ == '__main__':
     structure.to(filename='POSCAR')
     write_potcar(run_spec)
     run_vasp()
+    plotting_result = pydass_vasp.plotting.plot_dos(display=False, save_figs=True, save_data=True, return_states_at_Ef=True)
+    properties = fileload('../properties.json')
+    properties['TDOS_at_Ef'] = plotting_result['TDOS_at_Ef']
+    filedump(properties, '../properties.json')

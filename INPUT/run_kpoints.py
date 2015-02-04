@@ -19,7 +19,9 @@ if __name__ == '__main__':
     rm_stdout()
     properties = fileload('../properties.json')
     (incar, kpoints) = read_incar_kpoints(run_spec)
-    if not detect_is_mag(properties['mag']):
+    if detect_is_mag(properties['mag']):
+        incar.update({'ISPIN': 2})
+    else:
         incar.update({'ISPIN': 1})
 
     if os.path.isfile('../POSCAR'):

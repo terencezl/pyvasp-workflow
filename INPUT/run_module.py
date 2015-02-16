@@ -9,8 +9,10 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-plt.style.use('ggplot')
-plt.rcParams['figure.figsize'] = [5, 4]
+try:
+  plt.style.use('research')
+except ValueError:
+  pass
 import pymatgen as mg
 
 POTENTIAL_DATABASE = 'PATH-TO-YOUR-POTENTIAL-DATABASE'
@@ -162,7 +164,6 @@ def get_test_type_strain_delta_list(cryst_sys):
     if cryst_sys == 'cubic':
         test_type_list = ["c11+2c12", "c11-c12", "c44"]
         delta_list = np.ones(((3, 5))) * [0, -0.02, 0.02, -0.03, 0.03]
-        delta_list *= 2
         delta_list[0] = delta_list[0]/np.sqrt(3)
 
         strain_list.append(lambda delta: np.array([[1 + delta, 0, 0],
@@ -180,7 +181,6 @@ def get_test_type_strain_delta_list(cryst_sys):
     elif cryst_sys == 'hexagonal':
         test_type_list = ["2c11+2c12+4c13+c33", "c11-c12", "c11+c12", "c44", "c33"]
         delta_list = np.ones(((5, 5))) * [0, -0.02, 0.02, -0.03, 0.03]
-        delta_list *= 2
 
         strain_list.append(lambda delta: np.array([[1 + delta, 0, 0],
                                                    [0, 1 + delta, 0],

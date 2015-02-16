@@ -2,11 +2,9 @@ import os
 import sys
 import shutil
 import numpy as np
-import matplotlib
-matplotlib.use('Agg')
+from run_module import rm_stdout, detect_is_mag, fileload, filedump, chdir, enter_main_dir, run_vasp, read_incar_kpoints, write_potcar, generate_structure, get_test_type_strain_delta_list, solve
 import pymatgen as mg
 import pydass_vasp
-from run_module import rm_stdout, detect_is_mag, fileload, filedump, chdir, enter_main_dir, run_vasp, read_incar_kpoints, write_potcar, generate_structure, get_test_type_strain_delta_list, solve
 
 
 def central_poly(X, a, b, c):
@@ -29,6 +27,12 @@ if __name__ == '__main__':
         incar.update({'ISPIN': 2})
     else:
         incar.update({'ISPIN': 1})
+
+    if incar['LWAVE'] == False:
+        LWAVE = False
+        incar['LWAVE'] == True
+    else:
+        LWAVE = True
 
     if os.path.isfile('../POSCAR'):
         structure = mg.Structure.from_file('../POSCAR')
@@ -62,6 +66,8 @@ if __name__ == '__main__':
                 if is_mag:
                     mag[ind] = oszicar.ionic_steps[-1]['mag']
 
+            if not LWAVE:
+                os.remove('WAVECAR')
             fitting_result = pydass_vasp.fitting.curve_fit(central_poly, delta, energy, save_figs=True,
                       output_prefix=test_type)
             fitting_result['params'] = fitting_result['params'].tolist()
@@ -69,6 +75,7 @@ if __name__ == '__main__':
             fitting_result['delta'] = delta.tolist()
             fitting_result['energy'] = energy.tolist()
             fitting_result['mag'] = mag.tolist()
+            filedump(fitting_result, 'fitting_result.json')
             fitting_result_to_json[test_type] = fitting_result
             shutil.copy(test_type + '.pdf', '..')
             os.chdir('..')

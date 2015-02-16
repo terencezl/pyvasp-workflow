@@ -4,10 +4,8 @@ import shutil
 from subprocess import call
 import glob
 import numpy as np
-import matplotlib
-matplotlib.use('Agg')
-import pymatgen as mg
 from run_module import rm_stdout, detect_is_mag, fileload, filedump, chdir, enter_main_dir, run_vasp, read_incar_kpoints, write_potcar, generate_structure
+import pymatgen as mg
 
 
 if __name__ == '__main__':

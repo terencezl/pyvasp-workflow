@@ -5,8 +5,7 @@ pot_type: PAW_PBE
 incar:
   ENCUT: 400
   PREC: Normal
-  # NBANDS: 24
-  ISPIN: 1
+  ISPIN: 2
   ISMEAR: 1
   SIGMA: 0.1
   EDIFF: 1e-06

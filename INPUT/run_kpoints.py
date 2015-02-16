@@ -2,11 +2,9 @@ import os
 import sys
 import shutil
 import numpy as np
-import matplotlib
-matplotlib.use('Agg')
+from run_module import rm_stdout, detect_is_mag, fileload, filedump, chdir, enter_main_dir, run_vasp, read_incar_kpoints, write_potcar, generate_structure
 import matplotlib.pyplot as plt
 import pymatgen as mg
-from run_module import rm_stdout, detect_is_mag, fileload, filedump, chdir, enter_main_dir, run_vasp, read_incar_kpoints, write_potcar, generate_structure
 
 
 if __name__ == '__main__':
@@ -34,7 +32,7 @@ if __name__ == '__main__':
     if isinstance(kpoints_params, dict):
         kpoints_change = np.array([range(kpoints_params['begin'][i], kpoints_params['end'][i], kpoints_params['step']) for i in range(3)]).T
     elif isinstance(kpoints_params, list):
-        kpoints_change = kpoints_params
+        kpoints_change = np.array(kpoints_params)
     energy = np.zeros(len(kpoints_change))
 
     for i, kp in enumerate(kpoints_change):
@@ -51,6 +49,7 @@ if __name__ == '__main__':
     plt.plot(kpoints_change[:, 0], energy, 'o')
     plt.xlabel('KP1')
     plt.ylabel('Energy (eV)')
+    plt.tight_layout()
     plt.savefig('energy-kps.pdf')
     plt.close()
     np.savetxt('energy-kps.txt', np.column_stack((kpoints_change, energy)), '%12.4f', header='kp1 kp2 kp3 energy')
@@ -59,6 +58,7 @@ if __name__ == '__main__':
     plt.plot(kpoints_change[1:, 0], energy_relative, 'o')
     plt.xlabel('KP1')
     plt.ylabel('Energy (eV)')
+    plt.tight_layout()
     plt.savefig('energy_relative-kps.pdf')
     plt.close()
     np.savetxt('energy_relative-kps.txt', np.column_stack((kpoints_change[1:], energy_relative)), '%12.4f', header='kp1 kp2 kp3 energy_relative')

@@ -7,7 +7,7 @@ A programmatic workflow of defining, submitting and analyzing VASP run routines 
 
 Please
 
-    git clone https://github.com/terencezl/VASP-routines-with-pymatgen
+    git clone https://github.com/terencezl/pyvasp-routines
 
 and rename it to whatever you wish to call your project. You'll work within this directory for this project.
 

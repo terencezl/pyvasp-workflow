@@ -72,7 +72,7 @@ if __name__ == '__main__':
     is_mag = incar['ISPIN'] == 2
     if incar['LWAVE'] == False:
         LWAVE = False
-        incar['LWAVE'] == True
+        incar['LWAVE'] = True
     else:
         LWAVE = True
     structure = generate_structure(run_spec)

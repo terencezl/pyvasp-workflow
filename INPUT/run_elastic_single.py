@@ -30,7 +30,7 @@ if __name__ == '__main__':
 
     if incar['LWAVE'] == False:
         LWAVE = False
-        incar['LWAVE'] == True
+        incar['LWAVE'] = True
     else:
         LWAVE = True
 
@@ -75,8 +75,8 @@ if __name__ == '__main__':
             fitting_result['delta'] = delta.tolist()
             fitting_result['energy'] = energy.tolist()
             fitting_result['mag'] = mag.tolist()
-            filedump(fitting_result, 'fitting_result.json')
             fitting_result_to_json[test_type] = fitting_result
+            filedump(fitting_result_to_json, '../fitting_result.json')
             shutil.copy(test_type + '.pdf', '..')
             os.chdir('..')
 

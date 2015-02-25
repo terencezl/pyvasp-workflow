@@ -121,14 +121,13 @@ if __name__ == '__main__':
 
     # record keeping
     fitting_result.pop('r_squared')
-    fitting_result.pop('iterations')
+    iterations = fitting_result.pop('iterations')
     properties.update(fitting_result)
     properties.update({'E0': energy, 'mag': mag})
     if run_spec.has_key('phonopy'):
-        iterations = fitting_result['iterations']
         properties.update({'volume': iterations[-1]['volume'], 'energy': iterations[-1]['energy'], 'poscars': poscars})
         e_v_dat = np.column_stack((iterations[-1]['volume'], iterations[-1]['energy']))
-        np.savetxt('e-v.dat', e_v_dat, '%15.6f', header='volume energy')
+        np.savetxt('../e-v.dat', e_v_dat, '%15.6f', header='volume energy')
     filedump(properties, '../properties.json')
 
     shutil.copy('CONTCAR', '../POSCAR')

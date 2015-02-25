@@ -4,7 +4,7 @@ import shutil
 from subprocess import call
 import glob
 import numpy as np
-from run_module import rm_stdout, detect_is_mag, fileload, filedump, chdir, enter_main_dir, run_vasp, read_incar_kpoints, write_potcar, generate_structure
+from run_module import rm_stdout, detect_is_mag, fileload, filedump, chdir, enter_main_dir, run_vasp, read_incar_kpoints, write_potcar, generate_structure, VASP
 import pymatgen as mg
 
 
@@ -13,9 +13,6 @@ if __name__ == '__main__':
     run_spec = fileload(filename)
     os.remove(filename)
     phonopy_dim = ' '.join(map(str, run_spec['phonopy']['dim']))
-    phonopy_mp = ' '.join(map(str, run_spec['phonopy']['mp']))
-    phonopy_tmax = str(run_spec['phonopy']['tmax'])
-    phonopy_tstep = str(run_spec['phonopy']['tstep'])
 
     enter_main_dir(run_spec)
     filedump(run_spec, filename)
@@ -40,26 +37,23 @@ if __name__ == '__main__':
 
     for V, poscar in zip(volume, poscars):
         chdir(str(V))
-        rm_stdout()
-        incar.write_file('INCAR')
-        kpoints.write_file('KPOINTS')
         structure = mg.Structure.from_dict(poscar)
         structure.to(filename='POSCAR')
         call('phonopy -d --dim="' + phonopy_dim + '" > /dev/null', shell=True)
-        os.rename('POSCAR', 'POSCAR_orig')
-        os.rename('SPOSCAR', 'POSCAR')
-        os.remove('disp.yaml')
-        for f in glob.glob('POSCAR-*'):
-            os.remove(f)
-        write_potcar(run_spec)
-        run_vasp()
-        call('phonopy --fc vasprun.xml > /dev/null 2>&1', shell=True)
-        call('phonopy --readfc -c POSCAR_orig --mp="' + phonopy_mp + '" -tsp --dim="' + phonopy_dim + '" --tmax=' + phonopy_tmax + ' --tstep=' + phonopy_tstep + ' > /dev/null 2>&1', shell=True)
-        os.chdir('..')
+        os.remove('SPOSCAR')
+        disp_poscars = sorted(glob.glob('POSCAR-*'))
+        disp_dirs = ['disp-' + i.split('POSCAR-')[1] for i in disp_poscars]
 
-    # post processing
-    thermal_properties = ' '.join([str(i) + '/thermal_properties.yaml' for i in volume])
-    call('phonopy-qha ../e-v.dat ' + thermal_properties + ' --tmax=' + phonopy_tmax + ' > /dev/null 2>&1', shell=True)
-    # gibbs = np.loadtxt('gibbs-temperature.dat').T.tolist()
-    # properties['gibbs'] = gibbs
-    # filedump(properties, '../properties.json')
+        for disp_d, disp_p in zip(disp_dirs, disp_poscars):
+            chdir(disp_d)
+            rm_stdout()
+            shutil.move('../' + disp_p, 'POSCAR')
+            incar.write_file('INCAR')
+            kpoints.write_file('KPOINTS')
+            write_potcar(run_spec)
+            job = str(V) + '-' + disp_d
+            shutil.copy('../../../../INPUT/deploy.job', job)
+            call('sed -i "/python/c time ' + VASP + '" ' + job, shell=True)
+            call('qsub ' + job, shell=True)
+            os.chdir('..')
+        os.chdir('..')

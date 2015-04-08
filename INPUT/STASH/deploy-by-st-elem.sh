@@ -1,6 +1,5 @@
 #!/bin/bash
 task="$1"
-subdirname="$2"
 if [[ -z $task ]]; then
     echo "You must provide task name at least!"
     exit 1

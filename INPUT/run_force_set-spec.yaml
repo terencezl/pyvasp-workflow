@@ -13,6 +13,7 @@ incar:
   KPAR: 3
   NPAR: 1
   ADDGRID: True
+  LREAL: A
   LCHARG: False
   LWAVE: False
 kpoints:

@@ -25,14 +25,16 @@ if __name__ == '__main__':
     else:
         is_properties = False
 
-    if os.path.isfile('../POSCAR'):
+    if run_spec.has_key('poscar'):
+        structure = generate_structure(run_spec)
+        if run_spec['poscar'].has_key('volume'):
+            structure.scale_lattice(run_spec['poscar']['volume'])
+        elif is_properties:
+            structure.scale_lattice(properties['V0'])
+    elif os.path.isfile('../POSCAR'):
         structure = mg.Structure.from_file('../POSCAR')
     elif os.path.isfile('CONTCAR'):
         structure = mg.Structure.from_file('CONTCAR')
-    else:
-        structure = generate_structure(run_spec)
-        if is_properties:
-            structure.scale_lattice(properties['V0'])
 
     incar.write_file('INCAR')
     kpoints.write_file('KPOINTS')
@@ -40,6 +42,3 @@ if __name__ == '__main__':
     write_potcar(run_spec)
     run_vasp()
     plotting_result = pydass_vasp.plotting.plot_tdos(display=False, save_figs=True, return_states_at_Ef=True)
-    if is_properties:
-        properties['TDOS_at_Ef'] = plotting_result['TDOS_at_Ef']/properties['V0']
-        filedump(properties, '../properties.json')

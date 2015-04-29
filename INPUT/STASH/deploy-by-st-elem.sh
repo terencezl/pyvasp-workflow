@@ -7,7 +7,7 @@ fi
 shift 1
 
 if [[ "$1" ]]; then
-    task_spec="$1"-spec.yaml
+    task_spec="$1"
     shift 1
 else
     task_spec=${task}-spec.yaml

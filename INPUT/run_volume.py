@@ -79,7 +79,7 @@ if __name__ == '__main__':
     else:
         LWAVE = True
     structure = generate_structure(run_spec)
-    volume_params = run_spec['volume']
+    volume_params = run_spec['poscar']['volume']
     V_sample_point_num = volume_params['sample_point_num']
     fitting_results = []
 

@@ -7,7 +7,7 @@ fi
 shift 1
 
 if [[ "$1" ]]; then
-    task_spec="$1"-spec.yaml
+    task_spec="$1"
     shift 1
 else
     task_spec=${task}-spec.yaml
@@ -23,7 +23,7 @@ for i in 12,1 12,2; do
     job=${KPAR}-${NPAR}
     suffix=${job}_`date +%F-%T`
     task_spec_suffixed=${task_spec%-spec.yaml}-spec-${suffix}.yaml
-    python -c "
+    job=`python -c "
 import os
 os.chdir('INPUT')
 from run_module import fileload, filedump
@@ -32,11 +32,12 @@ run_spec['run_subdir'] += '-${job}'
 run_spec['incar']['KPAR'] = $KPAR
 run_spec['incar']['NPAR'] = $NPAR
 filedump(run_spec, '../${task_spec_suffixed}')
-    "
-    cp INPUT/deploy.job $job
-    sed -i "/python/c python INPUT/${task}.py $task_spec_suffixed $other_args" $job
-    qsub $job
-    rm $job
+print run_spec['run_subdir']
+    "`
+    cp INPUT/deploy.job "$job"
+    sed -i "/python/c python INPUT/${task}.py $task_spec_suffixed $other_args" "$job"
+    qsub "$job"
+    rm "$job"
 done
 
 

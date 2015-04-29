@@ -7,7 +7,7 @@ fi
 shift 1
 
 if [[ "$1" ]]; then
-    task_spec="$1"-spec.yaml
+    task_spec="$1"
     shift 1
 else
     task_spec=${task}-spec.yaml
@@ -15,23 +15,21 @@ fi
 
 other_args="$@"
 
-for i in 19; do
-    # for j in 6 12; do
-        job=$i
-        suffix=${job}_`date +%F-%T`
-        task_spec_suffixed=${task_spec%-spec.yaml}-spec-${suffix}.yaml
-        python -c "
+for i in 288.5 266 304; do
+    suffix=${i}_`date +%F-%T`
+    task_spec_suffixed=${task_spec%-spec.yaml}-spec-${suffix}.yaml
+    job=`python -c "
 import os
 os.chdir('INPUT')
 from run_module import fileload, filedump
 run_spec = fileload('${task_spec}')
-run_spec['run_subdir'] += '-${job}'
-run_spec['kpoints']['divisions'] = [$i, $i, $i]
+run_spec['run_subdir'] += '-$i'
+run_spec['poscar']['volume'] = $i
 filedump(run_spec, '../${task_spec_suffixed}')
-        "
-        cp INPUT/deploy.job $job
-        sed -i "/python/c python INPUT/${task}.py $task_spec_suffixed $other_args" $job
-        qsub $job
-        rm $job
-    # done
+print run_spec['run_subdir']
+    "`
+    cp INPUT/deploy.job "$job"
+    sed -i "/python/c python INPUT/${task}.py $task_spec_suffixed $other_args" "$job"
+    qsub "$job"
+    rm "$job"
 done

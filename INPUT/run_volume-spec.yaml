@@ -23,7 +23,7 @@ kpoints:
   divisions: [17, 17, 17]
 poscar:
   template: POSCAR-rocksalt
-volume:
-  begin: 15
-  end:   25
-  sample_point_num: 5
+  volume:
+    begin: 15
+    end:   25
+    sample_point_num: 5

@@ -63,7 +63,7 @@ if __name__ == '__main__':
     rm_stdout()
 
     # for solution runs
-    if run_spec.has_key('solution') and run_spec['solution'].has_key('ratio'):
+    if 'solution' in run_spec and 'ratio' in run_spec['solution']:
         ratio = str(run_spec['solution']['ratio'])
         ratio_list = [float(i) for i in ratio.split('-')]
         if ratio_list[0] == 0 and ratio_list[1] == 1:
@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
     (incar, kpoints) = read_incar_kpoints(run_spec)
     is_mag = incar['ISPIN'] == 2
-    if incar['LWAVE'] == False:
+    if not incar['LWAVE']:
         LWAVE = False
         incar['LWAVE'] = True
     else:
@@ -126,7 +126,7 @@ if __name__ == '__main__':
     properties.update({'E0': energy, 'mag': mag})
     filedump(properties, '../properties.json')
     # phonopy-qha e-v
-    if run_spec.has_key('phonopy'):
+    if 'phonopy' in run_spec:
         e_v_dat = np.column_stack((fitting_results[-1]['volume'], fitting_results[-1]['energy']))
         np.savetxt('../e-v.dat', e_v_dat, '%15.6f', header='volume energy')
 

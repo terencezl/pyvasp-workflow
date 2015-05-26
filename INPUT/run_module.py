@@ -35,7 +35,7 @@ def filedump(dict_to_file, filename):
         if filename.endswith('.json'):
             json.dump(dict_to_file, f, indent=4)
         elif filename.endswith('.yaml'):
-            yaml.dump(dict_to_file, f)
+            yaml.dump(dict_to_file, f, default_flow_style=False)
         else:
             raise IOError("Can't read file!")
 
@@ -81,12 +81,12 @@ def read_incar_kpoints(run_spec):
     """
     # INCAR
     incar = mg.io.vaspio.Incar()
-    if run_spec.has_key('incar') and run_spec['incar']:
+    if 'incar' in run_spec and run_spec['incar']:
         incar.update(run_spec['incar'])
 
     # KPOINTS
     kpoints = mg.io.vaspio.Kpoints.monkhorst_automatic([11, 11, 11])
-    if run_spec.has_key('kpoints') and run_spec['kpoints']:
+    if 'kpoints' in run_spec and run_spec['kpoints']:
         kpoints_spec = run_spec['kpoints']
         if kpoints_spec['mode'] == 'M':
             kpoints = mg.io.vaspio.Kpoints.monkhorst_automatic(kpoints_spec['divisions'])
@@ -112,7 +112,7 @@ def generate_structure(run_spec):
     """
     poscar_dict = run_spec['poscar']
     elem_types_struct = [re.sub(r'_.*', '', i) for i in run_spec['elem_types']]
-    if poscar_dict.has_key('template') and poscar_dict['template']:
+    if 'template' in poscar_dict and poscar_dict['template']:
         poscar = mg.io.vaspio.Poscar.from_file(os.path.join(template_dir, poscar_dict['template']))
         structure = poscar.structure
         for i, item in enumerate(structure.symbol_set):

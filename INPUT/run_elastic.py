@@ -27,7 +27,7 @@ if __name__ == '__main__':
     else:
         incar.update({'ISPIN': 1})
 
-    if incar['LWAVE'] == False:
+    if not incar['LWAVE']:
         LWAVE = False
         incar['LWAVE'] = True
     else:
@@ -40,7 +40,7 @@ if __name__ == '__main__':
         structure.scale_lattice(V0)
 
     combined_econst_array = []
-    fitting_result_to_json = {}
+    fitting_results_summary = {}
 
     chdir('nostrain')
     rm_stdout()
@@ -85,23 +85,24 @@ if __name__ == '__main__':
 
         if not LWAVE:
             os.remove('WAVECAR')
-        fitting_result = pydass_vasp.fitting.curve_fit(central_poly, delta, energy, save_figs=True,
+        fitting_results = pydass_vasp.fitting.curve_fit(central_poly, delta, energy, save_figs=True,
                     output_prefix=test_type)
-        combined_econst_array.append(fitting_result['params'][0])
-        fitting_result['params'] = fitting_result['params'].tolist()
-        fitting_result.pop('fitted_data')
-        fitting_result['delta'] = delta.tolist()
-        fitting_result['energy'] = energy.tolist()
-        fitting_result['mag'] = mag.tolist()
-        fitting_result_to_json[test_type] = fitting_result
-        filedump(fitting_result_to_json, '../fitting_result.json')
+        combined_econst_array.append(fitting_results['params'][0])
+        fitting_results['params'] = fitting_results['params'].tolist()
+        fitting_results.pop('fitted_data')
+        fitting_results['delta'] = delta.tolist()
+        fitting_results['energy'] = energy.tolist()
+        fitting_results['mag'] = mag.tolist()
+        filedump(fitting_results, 'fitting_results.json')
+        # higher level fitting_results.json
+        fitting_results_summary[test_type] = fitting_results
+        filedump(fitting_results_summary, '../fitting_results.json')
         shutil.copy(test_type + '.pdf', '..')
         os.chdir('..')
 
     combined_econst_array = np.array(combined_econst_array) * 160.2 / V0
     solved = solve(cryst_sys, combined_econst_array)
     filedump(solved, 'elastic.json')
-    filedump(fitting_result_to_json, 'fitting_result.json')
 
     properties['elastic'] = solved
     filedump(properties, '../properties.json')

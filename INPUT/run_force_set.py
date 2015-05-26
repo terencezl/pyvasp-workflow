@@ -21,7 +21,7 @@ if __name__ == '__main__':
     filedump(run_spec, filename)
 
     # for solution runs
-    if run_spec.has_key('solution') and run_spec['solution'].has_key('ratio'):
+    if 'solution' in run_spec and 'ratio' in run_spec['solution']:
         ratio = str(run_spec['solution']['ratio'])
         ratio_list = [float(i) for i in ratio.split('-')]
         if ratio_list[0] == 0 and ratio_list[1] == 1:

@@ -50,7 +50,7 @@ if __name__ == '__main__':
         # run_vasp()
         job = disp_d
         shutil.copy('../../../INPUT/deploy.job', job)
-        call('sed -i "/python/c time ' + VASP + '" ' + job, shell=True)
+        call('sed -i "/python/c time ' + VASP  + ' > stdout" ' + job, shell=True)
         call('qsub ' + job, shell=True)
 
         os.chdir('..')

@@ -20,15 +20,15 @@ for i in 12,1 12,2; do
     OLDIFS=$IFS; IFS=',';
     set $i; KPAR=$1; NPAR=$2
     IFS=$OLDIFS
-    job=${KPAR}-${NPAR}
-    suffix=${job}_`date +%F-%T`
+    I=${KPAR}-${NPAR}
+    suffix=${I}_`date +%F-%T`
     task_spec_suffixed=${task_spec%-spec.yaml}-spec-${suffix}.yaml
     job=`python -c "
 import os
 os.chdir('INPUT')
 from run_module import fileload, filedump
 run_spec = fileload('${task_spec}')
-run_spec['run_subdir'] += '-${job}'
+run_spec['run_subdir'] += '-$I'
 run_spec['incar']['KPAR'] = $KPAR
 run_spec['incar']['NPAR'] = $NPAR
 filedump(run_spec, '../${task_spec_suffixed}')

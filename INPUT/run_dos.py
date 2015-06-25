@@ -36,9 +36,22 @@ if __name__ == '__main__':
     elif os.path.isfile('CONTCAR'):
         structure = mg.Structure.from_file('CONTCAR')
 
+    # first SC run
     incar.write_file('INCAR')
     kpoints.write_file('KPOINTS')
     structure.to(filename='POSCAR')
     write_potcar(run_spec)
     run_vasp()
-    plotting_result = pydass_vasp.plotting.plot_tdos(display=False, save_figs=True, return_states_at_Ef=True)
+
+    # second non-SC run
+    incar.update(run_spec['dos']['incar'])
+    kpoints.kpts = [run_spec['dos']['kpoints']['divisions']]
+    structure = mg.Structure.from_file('CONTCAR')
+
+    incar.write_file('INCAR')
+    kpoints.write_file('KPOINTS')
+    structure.to(filename='POSCAR')
+    write_potcar(run_spec)
+    run_vasp()
+
+    plotting_result = pydass_vasp.plotting.plot_tdos(display=False, save_figs=True)

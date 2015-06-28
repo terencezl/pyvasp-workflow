@@ -75,16 +75,20 @@ def run_vasp():
     call('echo -e ' + hbreak + ' | tee -a stdout', shell=True)
 
 
-def read_incar_kpoints(run_spec):
+def read_incar(run_spec):
     """
-    Read INCAR and KPOINTS.
+    Read INCAR.
     """
-    # INCAR
     incar = mg.io.vaspio.Incar()
     if 'incar' in run_spec and run_spec['incar']:
         incar.update(run_spec['incar'])
+    return incar
 
-    # KPOINTS
+
+def read_kpoints(run_spec):
+    """
+    Read KPOINTS.
+    """
     kpoints = mg.io.vaspio.Kpoints.monkhorst_automatic([11, 11, 11])
     if 'kpoints' in run_spec and run_spec['kpoints']:
         kpoints_spec = run_spec['kpoints']
@@ -92,7 +96,7 @@ def read_incar_kpoints(run_spec):
             kpoints = mg.io.vaspio.Kpoints.monkhorst_automatic(kpoints_spec['divisions'])
         elif kpoints_spec['mode'] == 'G':
             kpoints = mg.io.vaspio.Kpoints.gamma_automatic(kpoints_spec['divisions'])
-    return incar, kpoints
+    return kpoints
 
 
 def write_potcar(run_spec):

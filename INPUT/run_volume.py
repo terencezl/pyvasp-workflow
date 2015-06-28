@@ -2,7 +2,7 @@ import os
 import sys
 import shutil
 import numpy as np
-from run_module import rm_stdout, detect_is_mag, fileload, filedump, chdir, enter_main_dir, run_vasp, read_incar_kpoints, write_potcar, generate_structure
+from run_modules import *
 import matplotlib.pyplot as plt
 import pymatgen as mg
 import pydass_vasp
@@ -71,7 +71,8 @@ if __name__ == '__main__':
         elif ratio_list[0] == 1 and ratio_list[1] == 0:
             run_spec['elem_types'] = [run_spec['elem_types'][0], run_spec['elem_types'][2]]
 
-    (incar, kpoints) = read_incar_kpoints(run_spec)
+    incar = read_incar(run_spec)
+    kpoints = read_kpoints(run_spec)
     is_mag = incar['ISPIN'] == 2
     if not incar['LWAVE']:
         LWAVE = False

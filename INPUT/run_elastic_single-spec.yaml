@@ -22,7 +22,7 @@ kpoints:
   mode: M
   divisions: [19, 19, 9]
 poscar:
-  cryst_sys: cubic
   template: POSCAR-rocksalt-conventional
 elastic:
+  cryst_sys: cubic
   test_type: c44

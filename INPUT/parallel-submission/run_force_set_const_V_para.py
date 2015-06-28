@@ -4,7 +4,7 @@ import shutil
 from subprocess import call
 import glob
 import numpy as np
-from run_module import rm_stdout, detect_is_mag, fileload, filedump, chdir, enter_main_dir, run_vasp, read_incar_kpoints, write_potcar, generate_structure, VASP
+from run_modules import *
 import pymatgen as mg
 
 
@@ -20,7 +20,8 @@ if __name__ == '__main__':
     enter_main_dir(run_spec)
     filedump(run_spec, filename)
 
-    (incar, kpoints) = read_incar_kpoints(run_spec)
+    incar = read_incar(run_spec)
+    kpoints = read_kpoints(run_spec)
     properties = fileload('../properties.json')
     V0 = properties['V0']
     if detect_is_mag(properties['mag']):

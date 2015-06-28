@@ -2,7 +2,7 @@ import os
 import sys
 import shutil
 import numpy as np
-from run_module import VASP, rm_stdout, detect_is_mag, fileload, filedump, chdir, enter_main_dir, run_vasp, read_incar_kpoints, write_potcar, generate_structure, get_test_type_strain_delta_list, solve
+from run_modules import *
 import pymatgen as mg
 import pydass_vasp
 from subprocess import call
@@ -16,13 +16,14 @@ if __name__ == '__main__':
     run_spec = fileload(filename)
     os.remove(filename)
     test_type_input = run_spec['elastic']['test_type']
-    cryst_sys = run_spec['poscar']['cryst_sys']
+    cryst_sys = run_spec['elastic']['cryst_sys']
 
     enter_main_dir(run_spec)
     filedump(run_spec, filename)
     properties = fileload('../properties.json')
     V0 = properties['V0']
-    (incar, kpoints) = read_incar_kpoints(run_spec)
+    incar = read_incar(run_spec)
+    kpoints = read_kpoints(run_spec)
     is_mag = detect_is_mag(properties['mag'])
     if is_mag:
         incar.update({'ISPIN': 2})

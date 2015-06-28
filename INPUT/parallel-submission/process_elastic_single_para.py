@@ -2,7 +2,7 @@ import os
 import sys
 import shutil
 import numpy as np
-from run_module import rm_stdout, detect_is_mag, fileload, filedump, chdir, enter_main_dir, run_vasp, read_incar_kpoints, write_potcar, generate_structure, get_test_type_strain_delta_list, solve
+from run_modules import *
 import pymatgen as mg
 import pydass_vasp
 

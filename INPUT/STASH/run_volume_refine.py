@@ -2,7 +2,7 @@ import os
 import sys
 import shutil
 import numpy as np
-from run_modules import *
+from run_module import *
 import matplotlib.pyplot as plt
 import pymatgen as mg
 import pydass_vasp
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     os.remove(filename)
     enter_main_dir(run_spec)
     filedump(run_spec, filename)
-    rm_stdout()
+    init_stdout()
 
     incar = read_incar(run_spec)
     kpoints = read_kpoints(run_spec)

@@ -6,7 +6,7 @@ if [[ -z $task ]]; then
 fi
 shift 1
 
-if [[ "$1" ]]; then
+if [[ "$1" && "$1" != - ]]; then
     task_spec="$1"
     shift 1
 else
@@ -26,7 +26,7 @@ run_spec = fileload('${task_spec}')
 run_spec['run_subdir'] += '-$i'
 run_spec['poscar']['volume'] = $i
 filedump(run_spec, '../${task_spec_suffixed}')
-print run_spec['run_subdir']
+print(run_spec['run_subdir'])
     "`
     cp INPUT/deploy.job "$job"
     sed -i "/python/c python INPUT/${task}.py $task_spec_suffixed $other_args" "$job"

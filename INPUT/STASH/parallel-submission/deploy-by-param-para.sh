@@ -6,7 +6,7 @@ if [[ -z $task ]]; then
 fi
 shift 1
 
-if [[ "$1" ]]; then
+if [[ "$1" && "$1" != - ]]; then
     task_spec="$1"
     shift 1
 else

@@ -2,7 +2,7 @@ import os
 import sys
 import shutil
 import numpy as np
-from run_modules import *
+from run_module import *
 import pymatgen as mg
 import pydass_vasp
 
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     fitting_results_summary = {}
 
     chdir('nostrain')
-    rm_stdout()
+    init_stdout()
     incar.write_file('INCAR')
     kpoints.write_file('KPOINTS')
     structure.to(filename='POSCAR')
@@ -62,7 +62,7 @@ if __name__ == '__main__':
     for test_type, strain, delta in \
                 zip(*get_test_type_strain_delta_list(cryst_sys)):
         chdir(test_type)
-        rm_stdout()
+        init_stdout()
         energy = np.zeros(len(delta))
         energy[0] = energy_nostrain
         mag = np.zeros(len(delta))

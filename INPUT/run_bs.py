@@ -4,7 +4,6 @@ import shutil
 import numpy as np
 from run_module import *
 import pymatgen as mg
-import pydass_vasp
 
 
 if __name__ == '__main__':
@@ -37,9 +36,23 @@ if __name__ == '__main__':
     elif os.path.isfile('CONTCAR'):
         structure = mg.Structure.from_file('CONTCAR')
 
+    # first SC run
     incar.write_file('INCAR')
     kpoints.write_file('KPOINTS')
     structure.to(filename='POSCAR')
     write_potcar(run_spec)
     run_vasp()
-    plotting_result = pydass_vasp.plotting.plot_tdos(display=False, save_figs=True, return_states_at_Ef=True)
+
+    # second non-SC run
+    structure = mg.Structure.from_file('CONTCAR')
+    incar.update(run_spec['bs']['incar'])
+    # obtain the automatically generated kpoints list
+    hskp = mg.symmetry.bandstructure.HighSymmKpath(structure)
+    kpoints = mg.io.vaspio.Kpoints.automatic_linemode(run_spec['bs']['kpoints_division'], hskp)
+    kpoints.comment = ','.join(['-'.join(i) for i in hskp.kpath['path']])
+
+    incar.write_file('INCAR')
+    kpoints.write_file('KPOINTS')
+    structure.to(filename='POSCAR')
+    write_potcar(run_spec)
+    run_vasp()

@@ -4,7 +4,7 @@ import shutil
 from subprocess import call
 import glob
 import numpy as np
-from run_modules import *
+from run_module import *
 import pymatgen as mg
 
 
@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
     for V, poscar in zip(volume, poscars):
         chdir(str(V))
-        rm_stdout()
+        init_stdout()
         incar.write_file('INCAR')
         kpoints.write_file('KPOINTS')
         structure = mg.Structure.from_dict(poscar)

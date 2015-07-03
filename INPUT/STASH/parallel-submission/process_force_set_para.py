@@ -4,7 +4,7 @@ import shutil
 from subprocess import call
 import glob
 import numpy as np
-from run_modules import *
+from run_module import *
 import pymatgen as mg
 
 

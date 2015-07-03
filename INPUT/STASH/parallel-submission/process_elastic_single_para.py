@@ -2,7 +2,7 @@ import os
 import sys
 import shutil
 import numpy as np
-from run_modules import *
+from run_module import *
 import pymatgen as mg
 import pydass_vasp
 

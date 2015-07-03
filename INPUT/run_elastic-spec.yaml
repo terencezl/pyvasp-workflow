@@ -21,7 +21,5 @@ incar:
 kpoints:
   mode: M
   divisions: [17, 17, 17]
-poscar:
-  template: POSCAR-rocksalt
 elastic:
   cryst_sys: cubic

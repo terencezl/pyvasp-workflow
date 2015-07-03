@@ -49,9 +49,11 @@ def chdir(dirname):
     os.chdir(dirname)
 
 
-def rm_stdout():
-    if os.path.isfile('stdout'):
-        os.remove('stdout')
+def init_stdout():
+    """
+    Empty the stdout file and record working directory.
+    """
+    call('echo "Working directory: $PWD" | tee stdout', shell=True)
 
 
 def enter_main_dir(run_spec):
@@ -64,7 +66,7 @@ def enter_main_dir(run_spec):
 
 def run_vasp():
     """
-    Run mpi version of vasp.
+    Run vasp.
     """
     time_format = ' "\n----------\nreal     %E" '
     time = '/usr/bin/time -f ' + time_format

@@ -2,9 +2,8 @@ import os
 import sys
 import shutil
 import numpy as np
-from run_modules import *
+from run_module import *
 import pymatgen as mg
-import pydass_vasp
 
 
 if __name__ == '__main__':
@@ -13,7 +12,7 @@ if __name__ == '__main__':
     os.remove(filename)
     enter_main_dir(run_spec)
     filedump(run_spec, filename)
-    rm_stdout()
+    init_stdout()
     incar = read_incar(run_spec)
     kpoints = read_kpoints(run_spec)
     if os.path.isfile('../properties.json'):
@@ -54,5 +53,3 @@ if __name__ == '__main__':
     structure.to(filename='POSCAR')
     write_potcar(run_spec)
     run_vasp()
-
-    plotting_result = pydass_vasp.plotting.plot_tdos(display=False, save_figs=True)

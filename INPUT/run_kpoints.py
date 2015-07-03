@@ -2,7 +2,7 @@ import os
 import sys
 import shutil
 import numpy as np
-from run_modules import *
+from run_module import *
 import matplotlib.pyplot as plt
 import pymatgen as mg
 
@@ -14,10 +14,10 @@ if __name__ == '__main__':
 
     enter_main_dir(run_spec)
     filedump(run_spec, filename)
-    rm_stdout()
+    init_stdout()
     properties = fileload('../properties.json')
     incar = read_incar(run_spec)
-    kpoints = read_kpoints(run_spec)
+    kpoints = mg.io.vaspio.Kpoints()
     if detect_is_mag(properties['mag']):
         incar.update({'ISPIN': 2})
     else:
@@ -29,7 +29,8 @@ if __name__ == '__main__':
         structure = generate_structure(run_spec)
         structure.scale_lattice(properties['V0'])
 
-    kpoints_params = run_spec['kpoints_change']
+    kpoints.style = run_spec['kpoints_test']['mode']
+    kpoints_params = run_spec['kpoints_test']['kpoints_list']
     if isinstance(kpoints_params, dict):
         kpoints_change = np.array([range(kpoints_params['begin'][i], kpoints_params['end'][i], kpoints_params['step']) for i in range(3)]).T
     elif isinstance(kpoints_params, list):

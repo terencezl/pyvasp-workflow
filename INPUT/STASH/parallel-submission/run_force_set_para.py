@@ -4,7 +4,7 @@ import shutil
 from subprocess import call
 import glob
 import numpy as np
-from run_modules import *
+from run_module import *
 import pymatgen as mg
 
 
@@ -47,7 +47,7 @@ if __name__ == '__main__':
 
         for disp_d, disp_p in zip(disp_dirs, disp_poscars):
             chdir(disp_d)
-            rm_stdout()
+            init_stdout()
             shutil.move('../' + disp_p, 'POSCAR')
             incar.write_file('INCAR')
             kpoints.write_file('KPOINTS')

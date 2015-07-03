@@ -2,10 +2,9 @@ import os
 import sys
 import shutil
 import numpy as np
-from run_modules import *
+from run_module import *
 import pymatgen as mg
 import pydass_vasp
-from subprocess import call
 
 
 def central_poly(X, a, b, c):
@@ -15,8 +14,8 @@ if __name__ == '__main__':
     filename = sys.argv[1]
     run_spec = fileload(filename)
     os.remove(filename)
-    test_type_input = run_spec['elastic']['test_type']
     cryst_sys = run_spec['elastic']['cryst_sys']
+    test_type_input = run_spec['elastic']['test_type']
 
     enter_main_dir(run_spec)
     filedump(run_spec, filename)
@@ -30,6 +29,12 @@ if __name__ == '__main__':
     else:
         incar.update({'ISPIN': 1})
 
+    if not incar['LWAVE']:
+        LWAVE = False
+        incar['LWAVE'] = True
+    else:
+        LWAVE = True
+
     if os.path.isfile('../POSCAR'):
         structure = mg.Structure.from_file('../POSCAR')
     elif os.path.isfile('nostrain/CONTCAR'):
@@ -42,9 +47,10 @@ if __name__ == '__main__':
     for test_type, strain, delta in zip(test_type_list, strain_list, delta_list):
         if test_type == test_type_input:
             chdir(test_type)
-            rm_stdout()
+            init_stdout()
+            energy = np.zeros(len(delta))
+            mag = np.zeros(len(delta))
             for ind, value in enumerate(delta):
-                chdir(str(value))
                 incar.write_file('INCAR')
                 kpoints.write_file('KPOINTS')
                 lattice_modified = mg.Lattice(
@@ -53,12 +59,28 @@ if __name__ == '__main__':
                 structure_copy.modify_lattice(lattice_modified)
                 structure_copy.to(filename='POSCAR')
                 write_potcar(run_spec)
-                job = test_type + '-' + str(value)
-                shutil.copy('../../../../INPUT/deploy.job', job)
-                call('sed -i "/python/c time ' + VASP + ' > stdout" ' + job, shell=True)
-                call('sed -i "/#BSUB -o/c #BSUB -o $PWD/' + job + '.o%J" ' + job, shell=True)
-                call('sed -i "/#BSUB -e/c #BSUB -e $PWD/' + job + '.o%J" ' + job, shell=True)
-                call('sed -i "/#BSUB -J/c #BSUB -J ' + job + '" ' + job, shell=True)
-                call('bsub <' + job, shell=True)
-                os.chdir('..')
+                run_vasp()
+                oszicar = mg.io.vaspio.Oszicar('OSZICAR')
+                energy[ind] = oszicar.final_energy
+                if is_mag:
+                    mag[ind] = oszicar.ionic_steps[-1]['mag']
+
+            if not LWAVE:
+                os.remove('WAVECAR')
+            fitting_results = pydass_vasp.fitting.curve_fit(central_poly, delta, energy, save_figs=True,
+                      output_prefix=test_type)
+            fitting_results['params'] = fitting_results['params'].tolist()
+            fitting_results.pop('fitted_data')
+            fitting_results['delta'] = delta.tolist()
+            fitting_results['energy'] = energy.tolist()
+            fitting_results['mag'] = mag.tolist()
+            filedump(fitting_results, 'fitting_results.json')
+            # higher level fitting_results.json
+            if os.path.isfile('../fitting_results.json'):
+                fitting_results_summary = fileload('../fitting_results.json')
+            else:
+                fitting_results_summary = {}
+            fitting_results_summary[test_type] = fitting_results
+            filedump(fitting_results_summary, '../fitting_results.json')
+            shutil.copy(test_type + '.pdf', '..')
             os.chdir('..')

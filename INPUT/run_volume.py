@@ -2,7 +2,7 @@ import os
 import sys
 import shutil
 import numpy as np
-from run_modules import *
+from run_module import *
 import matplotlib.pyplot as plt
 import pymatgen as mg
 import pydass_vasp
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     os.remove(filename)
     enter_main_dir(run_spec)
     filedump(run_spec, filename)
-    rm_stdout()
+    init_stdout()
 
     # for solution runs
     if 'solution' in run_spec and 'ratio' in run_spec['solution']:
@@ -80,7 +80,7 @@ if __name__ == '__main__':
     else:
         LWAVE = True
     structure = generate_structure(run_spec)
-    volume_params = run_spec['poscar']['volume']
+    volume_params = run_spec['volume']
     V_sample_point_num = volume_params['sample_point_num']
     fitting_results = []
 

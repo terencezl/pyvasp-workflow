@@ -30,11 +30,9 @@ if __name__ == '__main__':
         structure.scale_lattice(properties['V0'])
 
     kpoints.style = run_spec['kpoints_test']['mode']
-    kpoints_params = run_spec['kpoints_test']['kpoints_list']
-    if isinstance(kpoints_params, dict):
-        kpoints_change = np.array([range(kpoints_params['begin'][i], kpoints_params['end'][i], kpoints_params['step']) for i in range(3)]).T
-    elif isinstance(kpoints_params, list):
-        kpoints_change = np.array(kpoints_params)
+    kpoints_params = run_spec['kpoints_test']['kpoints_change']
+    assert isinstance(kpoints_params, list)
+    kpoints_change = np.array(kpoints_params)
     energy = np.zeros(len(kpoints_change))
 
     for i, kp in enumerate(kpoints_change):
@@ -48,8 +46,10 @@ if __name__ == '__main__':
         energy[i] = oszicar.final_energy
 
     energy /= structure.num_sites
-    plt.plot(kpoints_change[:, 0], energy, 'o')
-    plt.xlabel('KP1')
+    plt.plot(energy, 'o')
+    ax = plt.gca()
+    ax.xaxis.set_ticklabels([','.join(map(str, i)) for i in kpoints_change.tolist()])
+    plt.xlabel('KP')
     plt.ylabel('Energy (eV)')
     plt.tight_layout()
     plt.savefig('energy-kps.pdf')

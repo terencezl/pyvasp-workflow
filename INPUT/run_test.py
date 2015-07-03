@@ -4,7 +4,6 @@ import shutil
 import numpy as np
 from run_module import *
 import pymatgen as mg
-import pydass_vasp
 
 
 if __name__ == '__main__':
@@ -42,4 +41,3 @@ if __name__ == '__main__':
     structure.to(filename='POSCAR')
     write_potcar(run_spec)
     run_vasp()
-    plotting_result = pydass_vasp.plotting.plot_tdos(display=False, save_figs=True, return_states_at_Ef=True)

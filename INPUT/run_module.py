@@ -119,17 +119,19 @@ def generate_structure(run_spec):
     """
     Generate pymatgen.Structure.
     """
-    poscar_dict = run_spec['poscar']
+    poscar_spec = run_spec['poscar']
     elem_types_struct = [re.sub(r'_.*', '', i) for i in run_spec['elem_types']]
-    if 'template' in poscar_dict and poscar_dict['template']:
-        poscar = mg.io.vaspio.Poscar.from_file(os.path.join(template_dir, poscar_dict['template']))
+    if 'template' in poscar_spec and poscar_spec['template']:
+        poscar = mg.io.vaspio.Poscar.from_file(os.path.join(template_dir, poscar_spec['template']))
         structure = poscar.structure
         for i, item in enumerate(structure.symbol_set):
             structure.replace_species({item: elem_types_struct[i]})
+        if 'volume' in poscar_spec:
+            structure.scale_lattice(run_spec['poscar']['volume'])
         return structure
 
-    cryst_sys = poscar_dict['cryst_sys']
-    lattice_params = poscar_dict['lattice_params']
+    cryst_sys = poscar_spec['cryst_sys']
+    lattice_params = poscar_spec['lattice_params']
     if cryst_sys == 'cubic':
         lattice = mg.Lattice.cubic(lattice_params['a'])
     elif cryst_sys == 'hexagonal':
@@ -149,10 +151,10 @@ def generate_structure(run_spec):
 
     elem_types_struct_multi = []
     for i, elem in enumerate(elem_types_struct):
-        elem_types_struct_multi.extend([elem] * poscar_dict['atoms_multi'][i])
+        elem_types_struct_multi.extend([elem] * poscar_spec['atoms_multi'][i])
 
-    structure = mg.Structure.from_spacegroup(poscar_dict['spacegroup'], lattice,
-            elem_types_struct_multi, poscar_dict['atoms_direct_locs'])
+    structure = mg.Structure.from_spacegroup(poscar_spec['spacegroup'], lattice,
+            elem_types_struct_multi, poscar_spec['atoms_direct_locs'])
     return structure
 
 

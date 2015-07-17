@@ -1,41 +1,45 @@
-pyvasp-routines
-===========================
+pyvasp-workflow
+===============
 
-A programmatic workflow of defining, submitting and analyzing VASP run routines with pymatgen, very robust and flexible.
+A simple yet flexible programmatic workflow of describing, submitting and analyzing VASP jobs.
 
-**The main purpose of this repo is suggesting a less cluttered, don't-repeat-yourself way of doing the messy work with VASP, especially when things get complicated.**
+**The main purpose of this repo is**
 
-Please
+1. demonstrating an elegant and intuitive way of doing the messy work with VASP. The advantages build up especially when things get more complicated.
+2. providing a few widely demanded routine examples to start with.
 
-    git clone https://github.com/terencezl/pyvasp-routines
+Please make sure you have installed [pymatgen](http://pymatgen.org/), and download or clone this repo:
 
-and rename it to whatever you wish to call your project. You'll work within this directory for this project.
+    git clone https://github.com/terencezl/pyvasp-workflow
 
-Introduction
-------------
+and rename it to whatever you wish to call your project. You'll start it within this directory.
 
-In the directory root, you'll see a folder called `INPUT/`, which contains a bunch of files to start with. They are:
+**Note, this is not a Python package, so no need to install it.**
 
-1. routine definition python files, ending with `.py`,
-2. setting files, ending with `.yaml`, which will be parsed by the routine `.py` files,
-3. deploy trigger files, typically ending with `.sh`, which submit the job.
+Files
+-----
 
-The workflow is like this:
+In the directory root, you'll see a directory called `INPUT/`, which contains a bunch of files to start with. They are:
 
-1. Get into `INPUT/`.
-2. Write up/alter the `.py` routine definition files, to set up the basic flow of a set of runs you wish to conduct in a single job submission (one record in the supercomputer queueing system, having a given walltime).
-3. Write up/alter the `.yaml` file, and provide the necessary information about this run, including `INCAR` tags, `KPOINTS` parameters, `POTCAR` types, involved elements, structure name, `POSCAR` parameters, etc. How you provide them highly depends on how you write your `.py` routine files. You can even omit the `.yaml` file and hardcode parameters into the `.py` routine files, but that would not give you a nice separation of layers.
-4. Write up/alter the `deploy.job` file. This is to be used as a template submission script, and will be processed by the `.sh` deploy trigger files. Note that this is supercomputing queueing system dependent, and may not even be needed.
-5. If you want to do this routine for more than one composition, or a set of runs with some other parameters in the `.yaml` file changing, you'll need the `.sh` deploy trigger files. In it, code up a loop and express the following.
-	1. Substitute the content of the `.yaml` setting file, that changing parameter.
-	2. If a `deploy.job` submission script is needed, substitute the submission script, taking the `.yaml` file name as an argument for the `python YOUR-PY-FILE` command.
-	3. Run python with the line ending with a `&` to run in background. Or, submit the `.job` file.
-6. Go back to the directory root, looking at `INPUT/`, and run the `.py` file or subimit the job. Alternatively, run/submit through your `.sh` trigger files by, e.g. `bash INPUT/deploy.sh`.
+1. a routine description file, ending with `.py`
+2. a setting file, ending with `.yaml`, which will be parsed by the routine `.py` file
+3. a deploy trigger file, typically ending with `.sh`, which submits a job script
+4. a job script, according to your supercomputer cluster's setup. Here it's named `deploy.job`
 
-Test run
---------
+To avoid cluttering of irrelevant files, under `INPUT/` there is only one set of `.py` and `.yaml` files. You'll need more as you define you own routines. For some examples, go to `STASH/`. For more (not-so-well-tested-and-documented) examples, go to `STASH/less-used`.
 
-If you would like to have a try of the already existing routines, note that `run_module.py` has a few commonly used routine functions, and remember to point variable `POTENTIAL_DATABASE` and `VASP` in the beginning to your machine's configuration.
+How To Run
+----------
 
-* `POTENTIAL_DATABASE` should have directories like `PAW_PBE`, which contain proprietory potential files like `H/POTCAR`, `Na_sv/POTCAR`. They should not be in the out-of-the-box zipped form, so please unzip the individual `POTCAR.Z` files in their respective directories for your future conveniences. If you don't like to do this, the POTCAR part of `run_module.py` needs to be changed accordingly.
-* `VASP` is the vasp executable, preferably MPI compiled.
+I assume your supercomputer cluster is using a queueing system to manage multi-users, which is the common practice in the field. If not, the job script is not needed, and the deploy trigger file needs to be adjusted.
+
+0. Edit the files in `INPUT/` as below.
+1. `run_module.py` has a few functions shared by other python routine description files. Take a look around. Point variables `POTENTIAL_DATABASE` and `VASP` in the beginning to your machine's configuration.
+
+  * `POTENTIAL_DATABASE` is a directory that have sub-directories like `PAW_LDA`, `PAW_PBE`, which contain proprietory potential files like `H/POTCAR`, `Na_sv/POTCAR`. The `POTCAR` files should not be in the zipped form (like in older distributions of VASP).
+  * `VASP` is the vasp executing command you would use in a shell. If mpi is used, don't forget to put it like `'mpirun vasp'`.
+
+2. Write up/alter the `.py` routine description file, to set up the basic flow of a set of runs you wish to conduct in a single job submission (one record in the supercomputer queueing system, having a given walltime).
+3. Write up/alter the `.yaml` setting file, and provide the necessary information about this run, including `INCAR` tags, `KPOINTS` parameters, `POTCAR` types, involved elements, structure name, `POSCAR` parameters, etc. How you provide them highly depends on how you write your `.py` routine file. You can even omit the `.yaml` file and hardcode parameters into the `.py` routine file, but that would not give you a nice separation of layers.
+4. Alter the `.sh` deploy trigger file and `deploy.job` script. Note that these two are supercomputing queueing system dependent, and you have to be familiar with it, and do some replacements in `.sh` with the command line tool `sed`.
+5. Go back one directory to the directory root, looking at `INPUT/`, and type in `bash INPUT/deploy.sh run_test`.

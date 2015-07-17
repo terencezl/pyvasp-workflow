@@ -16,11 +16,6 @@ fi
 other_args="$@"
 
 for st in NiAs WC; do
-    # for i in `cat INPUT/element.txt`; do
-    # for i in Sc_sv Ti_sv V_sv Cr_pv Mn_pv Fe Co Ni Cu Zn  Y_sv Zr_sv Nb_sv Mo_pv Tc_pv Ru_pv Rh_pv Pd Ag Cd   Hf_pv Ta_pv W_pv Re Os Ir Pt Au; do
-    # for i in Ti_sv V_sv Cr_pv Fe Co Ni Cu   Y_sv Zr_sv Nb_sv Mo_pv Tc_pv Ru_pv Rh_pv Pd Ag Cd   Hf_pv Ta_pv W_pv Re Os Ir Pt Au; do
-    # for i in Ni Tc_pv Rh_pv Pd Ag Ir Pt Au; do
-    # for i in Rh_pv Pd Ag Os Ir Pt Au; do
     for elem in Mn_pv Fe Co; do
         job=${st}-${elem}
         suffix=${job}_`date +%F-%T`

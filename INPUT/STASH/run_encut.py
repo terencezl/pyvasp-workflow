@@ -14,10 +14,10 @@ if __name__ == '__main__':
 
     enter_main_dir(run_spec)
     filedump(run_spec, filename)
-    rm_stdout()
+    init_stdout()
     properties = fileload('../properties.json')
     incar = read_incar(run_spec)
-    kpoints = mg.io.vaspio.Kpoints()
+    kpoints = read_kpoints(run_spec)
     if detect_is_mag(properties['mag']):
         incar.update({'ISPIN': 2})
     else:

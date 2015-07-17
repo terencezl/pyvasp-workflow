@@ -87,17 +87,20 @@ def read_incar(run_spec):
     return incar
 
 
-def read_kpoints(run_spec):
+def read_kpoints(run_spec, structure=None):
     """
     Read KPOINTS.
     """
-    kpoints = mg.io.vaspio.Kpoints.monkhorst_automatic([11, 11, 11])
+    kpoints = mg.io.vaspio.Kpoints.automatic(5)
     if 'kpoints' in run_spec and run_spec['kpoints']:
         kpoints_spec = run_spec['kpoints']
-        if kpoints_spec['mode'] == 'M':
-            kpoints = mg.io.vaspio.Kpoints.monkhorst_automatic(kpoints_spec['divisions'])
-        elif kpoints_spec['mode'] == 'G':
-            kpoints = mg.io.vaspio.Kpoints.gamma_automatic(kpoints_spec['divisions'])
+        if 'density'in kpoints_spec:
+            kpoints = mg.io.vaspio.Kpoints.automatic_density(structure, kpoints_spec['density'])
+        elif 'mode' in kpoints_spec:
+            if kpoints_spec['mode'] == 'M':
+                kpoints = mg.io.vaspio.Kpoints.monkhorst_automatic(kpoints_spec['divisions'])
+            elif kpoints_spec['mode'] == 'G':
+                kpoints = mg.io.vaspio.Kpoints.gamma_automatic(kpoints_spec['divisions'])
     return kpoints
 
 

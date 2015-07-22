@@ -28,8 +28,6 @@ if __name__ == '__main__':
 
     if os.path.isfile('../POSCAR'):
         structure = mg.Structure.from_file('../POSCAR')
-    elif os.path.isfile('CONTCAR'):
-        structure = mg.Structure.from_file('CONTCAR')
     else:
         structure = generate_structure(run_spec)
 

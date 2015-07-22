@@ -3,7 +3,7 @@ pyvasp-workflow
 
 A simple yet flexible programmatic workflow of describing, submitting and analyzing VASP jobs.
 
-**The main purpose of this repo is**
+**The main purposes of this repo are**
 
 1. demonstrating an elegant and intuitive way of doing the messy work with VASP. The advantages build up especially when things get more complicated.
 2. providing a few widely demanded routine examples to start with.
@@ -28,18 +28,28 @@ In the directory root, you'll see a directory called `INPUT/`, which contains a 
 
 To avoid cluttering of irrelevant files, under `INPUT/` there is only one set of `.py` and `.yaml` files. You'll need more as you define you own routines. For some examples, go to `STASH/`. For more (not-so-well-tested-and-documented) examples, go to `STASH/less-used`.
 
-How To Run
+How to Run
 ----------
 
 I assume your supercomputer cluster is using a queueing system to manage multi-users, which is the common practice in the field. If not, the job script is not needed, and the deploy trigger file needs to be adjusted.
 
 0. Edit the files in `INPUT/` as below.
-1. `run_module.py` has a few functions shared by other python routine description files. Take a look around. Point variables `POTENTIAL_DATABASE` and `VASP` in the beginning to your machine's configuration.
+1. `run_module.py` has a few functions shared by other Python routine description files. Take a look around and find out what you can use. Point variables `POTENTIAL_DATABASE` and `VASP` in the beginning to your machine's configuration.
 
-  * `POTENTIAL_DATABASE` is a directory that have sub-directories like `PAW_LDA`, `PAW_PBE`, which contain proprietory potential files like `H/POTCAR`, `Na_sv/POTCAR`. The `POTCAR` files should not be in the zipped form (like in older distributions of VASP).
+  * `POTENTIAL_DATABASE` is a directory that have sub-directories such as `PAW_LDA`, `PAW_PBE`, which contain proprietory potential files like `H/POTCAR`, `Na_sv/POTCAR`. The `POTCAR` files should not be in the zipped form (like in older distributions of VASP potentials).
   * `VASP` is the vasp executing command you would use in a shell. If mpi is used, don't forget to put it like `'mpirun vasp'`.
 
 2. Write up/alter the `.py` routine description file, to set up the basic flow of a set of runs you wish to conduct in a single job submission (one record in the supercomputer queueing system, having a given walltime).
 3. Write up/alter the `.yaml` setting file, and provide the necessary information about this run, including `INCAR` tags, `KPOINTS` parameters, `POTCAR` types, involved elements, structure name, `POSCAR` parameters, etc. How you provide them highly depends on how you write your `.py` routine file. You can even omit the `.yaml` file and hardcode parameters into the `.py` routine file, but that would not give you a nice separation of layers.
-4. Alter the `.sh` deploy trigger file and `deploy.job` script. Note that these two are supercomputing queueing system dependent, and you have to be familiar with it, and do some replacements in `.sh` with the command line tool `sed`.
-5. Go back one directory to the directory root, looking at `INPUT/`, and type in `bash INPUT/deploy.sh run_test`.
+4. Alter the `.sh` deploy trigger file and `deploy.job` script. Note that these two are supercomputer queueing system dependent, and you have to be familiar with it, and do some replacements with the command line tool `sed`. As an example, look at the included `deploy.sh` and `deploy.job`, meant but not limited for the [PBS](https://en.wikipedia.org/wiki/Portable_Batch_System) queueing system. 
+
+   In particular, you should create a script called `M`, make it executable (`chmod +x M`) and add it in your `$PATH`, so that `deploy.sh` can use it to change the job name, stdout and errout file directory, etc. and then submit it by the line `M "$job"`.
+   
+   For PBS, the M file is simple.
+   
+   ```
+   #!/usr/bin/env bash
+   qsub $@
+   ```
+
+5. Go back one directory to the directory root, looking at `INPUT/`, and type in `INPUT/deploy.sh run_test`.

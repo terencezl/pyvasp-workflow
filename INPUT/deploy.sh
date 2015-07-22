@@ -27,5 +27,5 @@ print(run_spec['run_subdir'])
 "`
 cp INPUT/deploy.job "$job"
 sed -i "/python/c python INPUT/${task}.py $task_spec_suffixed $other_args" "$job"
-qsub "$job"
+M "$job"
 rm "$job"

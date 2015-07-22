@@ -2,8 +2,6 @@
 #PBS -l nodes=1:ppn=12
 #PBS -j oe
 
-module load mkl
-
 cd $PBS_O_WORKDIR
 date
 python INPUT/run_xxx.py INPUT/ruh_xxx-spec.yaml

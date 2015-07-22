@@ -17,6 +17,7 @@ if __name__ == '__main__':
     phonopy_tmax = str(run_spec['phonopy']['tmax'])
     phonopy_tstep = str(run_spec['phonopy']['tstep'])
 
+    cwd = os.getcwd()
     enter_main_dir(run_spec)
     filedump(run_spec, filename)
 
@@ -48,12 +49,11 @@ if __name__ == '__main__':
         incar.write_file('INCAR')
         kpoints.write_file('KPOINTS')
         write_potcar(run_spec)
-        # run_vasp()
         job = disp_d
-        shutil.copy('../../../INPUT/deploy.job', job)
-        call('sed -i "/python/c time ' + VASP  + ' > stdout" ' + job, shell=True)
-        call('qsub ' + job, shell=True)
-
+        shutil.copy(cwd + '/INPUT/deploy.job', job)
+        call('sed -i "/python/c time ' + VASP + ' 2>&1 | tee -a stdout" ' + job, shell=True)
+        call('M ' + job, shell=True)
+        os.remove(job)
         os.chdir('..')
 
     # disp_vasprun_xml = ' '.join([i + '/vasprun.xml' for i in disp_dirs])

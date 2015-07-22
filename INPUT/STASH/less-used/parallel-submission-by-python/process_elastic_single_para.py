@@ -15,7 +15,7 @@ if __name__ == '__main__':
     run_spec = fileload(filename)
     os.remove(filename)
     test_type_input = run_spec['elastic']['test_type']
-    cryst_sys = run_spec['poscar']['cryst_sys']
+    cryst_sys = run_spec['elastic']['cryst_sys']
 
     enter_main_dir(run_spec)
     properties = fileload('../properties.json')

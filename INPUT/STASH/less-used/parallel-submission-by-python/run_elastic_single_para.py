@@ -18,8 +18,10 @@ if __name__ == '__main__':
     test_type_input = run_spec['elastic']['test_type']
     cryst_sys = run_spec['elastic']['cryst_sys']
 
+    cwd = os.getcwd()
     enter_main_dir(run_spec)
     filedump(run_spec, filename)
+
     properties = fileload('../properties.json')
     V0 = properties['V0']
     incar = read_incar(run_spec)
@@ -54,11 +56,9 @@ if __name__ == '__main__':
                 structure_copy.to(filename='POSCAR')
                 write_potcar(run_spec)
                 job = test_type + '-' + str(value)
-                shutil.copy('../../../../INPUT/deploy.job', job)
-                call('sed -i "/python/c time ' + VASP + ' > stdout" ' + job, shell=True)
-                call('sed -i "/#BSUB -o/c #BSUB -o $PWD/' + job + '.o%J" ' + job, shell=True)
-                call('sed -i "/#BSUB -e/c #BSUB -e $PWD/' + job + '.o%J" ' + job, shell=True)
-                call('sed -i "/#BSUB -J/c #BSUB -J ' + job + '" ' + job, shell=True)
-                call('bsub <' + job, shell=True)
+                shutil.copy(cwd + '/INPUT/deploy.job', job)
+                call('sed -i "/python/c time ' + VASP + ' 2>&1 | tee -a stdout" ' + job, shell=True)
+                call('M ' + job, shell=True)
+                os.remove(job)
                 os.chdir('..')
             os.chdir('..')

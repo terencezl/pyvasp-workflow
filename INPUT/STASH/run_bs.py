@@ -25,16 +25,15 @@ if __name__ == '__main__':
     else:
         is_properties = False
 
+    # higher priority for run_spec
     if 'poscar' in run_spec:
         structure = generate_structure(run_spec)
-        if 'volume' in run_spec['poscar']:
-            structure.scale_lattice(run_spec['poscar']['volume'])
-        elif is_properties:
-            structure.scale_lattice(properties['V0'])
+        # if is_properties and not 'volume' in run_spec['poscar']:
+            # structure.scale_lattice(properties['V0'])
     elif os.path.isfile('../POSCAR'):
         structure = mg.Structure.from_file('../POSCAR')
-    elif os.path.isfile('CONTCAR'):
-        structure = mg.Structure.from_file('CONTCAR')
+    # elif os.path.isfile('CONTCAR'):
+        # structure = mg.Structure.from_file('CONTCAR')
 
     # first SC run
     incar.write_file('INCAR')

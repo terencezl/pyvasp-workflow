@@ -17,8 +17,8 @@ if __name__ == '__main__':
 
     # read settings
     incar = read_incar(run_spec)
-    kpoints = read_kpoints(run_spec)
     structure = generate_structure(run_spec)
+    kpoints = read_kpoints(run_spec, structure)
 
     # write input files and run vasp
     incar.write_file('INCAR')

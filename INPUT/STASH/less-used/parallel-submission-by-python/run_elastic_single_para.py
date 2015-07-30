@@ -22,23 +22,30 @@ if __name__ == '__main__':
     enter_main_dir(run_spec)
     filedump(run_spec, filename)
 
-    properties = fileload('../properties.json')
-    V0 = properties['V0']
     incar = read_incar(run_spec)
-    kpoints = read_kpoints(run_spec)
-    is_mag = detect_is_mag(properties['mag'])
-    if is_mag:
-        incar.update({'ISPIN': 2})
-    else:
-        incar.update({'ISPIN': 1})
+    if os.path.isfile(('../properties.json')):
+        is_properties = True
+        properties = fileload('../properties.json')
 
-    if os.path.isfile('../POSCAR'):
-        structure = mg.Structure.from_file('../POSCAR')
-    elif os.path.isfile('nostrain/CONTCAR'):
-        structure = mg.Structure.from_file('nostrain/CONTCAR')
+    if 'ISPIN' in incar:
+        is_mag = incar['ISPIN'] == 2
     else:
+        if is_properties:
+            is_mag = detect_is_mag(properties['mag'])
+            if is_mag:
+                incar.update({'ISPIN': 2})
+            else:
+                incar.update({'ISPIN': 1})
+        else:
+            is_mag = False
+
+    # higher priority for run_spec
+    if 'poscar' in run_spec:
         structure = generate_structure(run_spec)
-        structure.scale_lattice(V0)
+    elif os.path.isfile('../POSCAR'):
+        structure = mg.Structure.from_file('../POSCAR')
+
+    kpoints = read_kpoints(run_spec, structure)
 
     test_type_list, strain_list, delta_list = get_test_type_strain_delta_list(cryst_sys)
     for test_type, strain, delta in zip(test_type_list, strain_list, delta_list):

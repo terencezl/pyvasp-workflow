@@ -11,24 +11,25 @@ if __name__ == '__main__':
     filename = sys.argv[1]
     run_spec = fileload(filename)
     os.remove(filename)
-
     enter_main_dir(run_spec)
     filedump(run_spec, filename)
     init_stdout()
-    properties = fileload('../properties.json')
     incar = read_incar(run_spec)
+    if os.path.isfile(('../properties.json')):
+        properties = fileload('../properties.json')
+        if 'ISPIN' not in incar:
+            if detect_is_mag(properties['mag']):
+                incar.update({'ISPIN': 2})
+            else:
+                incar.update({'ISPIN': 1})
     # empty kpoints to begin with
     kpoints = mg.io.vaspio.Kpoints()
-    if detect_is_mag(properties['mag']):
-        incar.update({'ISPIN': 2})
-    else:
-        incar.update({'ISPIN': 1})
 
-    if os.path.isfile('../POSCAR'):
-        structure = mg.Structure.from_file('../POSCAR')
-    else:
+    # higher priority for run_spec
+    if 'poscar' in run_spec:
         structure = generate_structure(run_spec)
-        structure.scale_lattice(properties['V0'])
+    elif os.path.isfile('../POSCAR'):
+        structure = mg.Structure.from_file('../POSCAR')
 
     kpoints.style = run_spec['kpoints_test']['mode']
     kpoints_params = run_spec['kpoints_test']['kpoints_change']

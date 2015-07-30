@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import datetime
 try:
   plt.style.use('research')
 except ValueError:
@@ -53,6 +54,7 @@ def init_stdout():
     """
     Empty the stdout file and record working directory.
     """
+    stdout_str = 'stdout_' + datetime.datetime.now().isoformat(sep='-') + '.out'
     call('echo "Working directory: $PWD" | tee stdout', shell=True)
 
 

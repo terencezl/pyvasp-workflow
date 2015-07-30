@@ -10,7 +10,7 @@ if [[ "$1" && "$1" != - ]]; then
     task_spec="$1"
     shift 1
 else
-    task_spec=${task}-spec.yaml
+    task_spec=${task}.yaml
 fi
 
 other_args="$@"
@@ -19,7 +19,7 @@ for st in NiAs WC; do
     for elem in Mn_pv Fe Co; do
         job=${st}-${elem}
         suffix=${job}_`date +%F-%T`
-        task_spec_suffixed=${task_spec%-spec.yaml}-spec-${suffix}.yaml
+        task_spec_suffixed=${task_spec%.yaml}-${suffix}.yaml
         python -c "
 import os
 os.chdir('INPUT')

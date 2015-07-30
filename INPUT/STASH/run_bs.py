@@ -14,26 +14,21 @@ if __name__ == '__main__':
     filedump(run_spec, filename)
     init_stdout()
     incar = read_incar(run_spec)
-    kpoints = read_kpoints(run_spec)
     if os.path.isfile('../properties.json'):
-        is_properties = True
         properties = fileload('../properties.json')
-        if detect_is_mag(properties['mag']):
-            incar.update({'ISPIN': 2})
-        else:
-            incar.update({'ISPIN': 1})
-    else:
-        is_properties = False
+        if 'ISPIN' not in incar:
+            if detect_is_mag(properties['mag']):
+                incar.update({'ISPIN': 2})
+            else:
+                incar.update({'ISPIN': 1})
 
     # higher priority for run_spec
     if 'poscar' in run_spec:
         structure = generate_structure(run_spec)
-        # if is_properties and not 'volume' in run_spec['poscar']:
-            # structure.scale_lattice(properties['V0'])
     elif os.path.isfile('../POSCAR'):
         structure = mg.Structure.from_file('../POSCAR')
-    # elif os.path.isfile('CONTCAR'):
-        # structure = mg.Structure.from_file('CONTCAR')
+
+    kpoints = read_kpoints(run_spec, structure)
 
     # first SC run
     incar.write_file('INCAR')

@@ -18,8 +18,13 @@ if __name__ == '__main__':
     cryst_sys = run_spec['elastic']['cryst_sys']
 
     enter_main_dir(run_spec)
-    properties = fileload('../properties.json')
-    is_mag = detect_is_mag(properties['mag'])
+    if 'ISPIN' in incar:
+        is_mag = incar['ISPIN'] == 2
+    elif os.path.isfile(('../properties.json')):
+        properties = fileload('../properties.json')
+        is_mag = detect_is_mag(properties['mag'])
+    else:
+        is_mag = False
 
     test_type_list, strain_list, delta_list = get_test_type_strain_delta_list(cryst_sys)
     for test_type, strain, delta in zip(test_type_list, strain_list, delta_list):

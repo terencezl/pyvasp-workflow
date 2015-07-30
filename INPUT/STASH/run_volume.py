@@ -8,7 +8,7 @@ import pymatgen as mg
 import pydass_vasp
 
 
-def volume_fitting(run_spec, (incar, kpoints, structure), (V_begin, V_end, V_sample_point_num), is_mag, fitting_results):
+def volume_fitting(run_spec, incar, kpoints, structure, V_begin, V_end, V_sample_point_num, is_mag, fitting_results):
     poscars = []
     volume = np.linspace(V_begin, V_end, V_sample_point_num)
     energy = np.zeros(len(volume))
@@ -72,38 +72,34 @@ if __name__ == '__main__':
             run_spec['elem_types'] = [run_spec['elem_types'][0], run_spec['elem_types'][2]]
 
     incar = read_incar(run_spec)
-    kpoints = read_kpoints(run_spec)
-    is_mag = incar['ISPIN'] == 2
-    if not incar['LWAVE']:
-        LWAVE = False
-        incar['LWAVE'] = True
-    else:
-        LWAVE = True
     structure = generate_structure(run_spec)
-    volume_params = run_spec['volume']
-    V_sample_point_num = volume_params['sample_point_num']
-    fitting_results = []
+    kpoints = read_kpoints(run_spec, structure)
 
-    if os.path.isfile('../properties.json'):
+    if 'volume' in run_spec and run_spec['volume']:
+        volume_params = run_spec['volume']
+        V_begin = volume_params['begin']
+        V_end = volume_params['end']
+        V_sample_point_num = volume_params['sample_point_num']
+    elif os.path.isfile('../properties.json'):
         properties = fileload('../properties.json')
         V0 = properties['V0']
         V_begin = V0 * 9./10
         V_end = V0 * 11./10
-    else:
-        V_begin = volume_params['begin']
-        V_end = volume_params['end']
-    properties = {}
+        V_sample_point_num = 5
+
+    is_mag = incar['ISPIN'] == 2
+    fitting_results = []
 
     # first round
     is_well_fitted, V0, structure, is_mag = \
-            volume_fitting(run_spec, (incar, kpoints, structure), (V_begin, V_end, V_sample_point_num), is_mag, fitting_results)
+            volume_fitting(run_spec, incar, kpoints, structure, V_begin, V_end, V_sample_point_num, is_mag, fitting_results)
 
     # possible next rounds
     while not is_well_fitted:
         V_begin = V0 * 9./10
         V_end = V0 * 11./10
         is_well_fitted, V0, structure, is_mag = \
-                volume_fitting(run_spec, (incar, kpoints, structure), (V_begin, V_end, V_sample_point_num), is_mag, fitting_results)
+                volume_fitting(run_spec, incar, kpoints, structure, V_begin, V_end, V_sample_point_num, is_mag, fitting_results)
 
     # equilibrium volume relaxation run
     incar.write_file('INCAR')
@@ -119,10 +115,11 @@ if __name__ == '__main__':
         is_mag = detect_is_mag(mag)
     else:
         mag = 0
-    if not LWAVE:
+    if 'LWAVE' not in incar:
         os.remove('WAVECAR')
 
     # dump properties.json
+    properties = {}
     properties.update(fitting_results[-1]['params'])
     properties.update({'E0': energy, 'mag': mag})
     filedump(properties, '../properties.json')

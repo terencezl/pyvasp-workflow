@@ -10,14 +10,14 @@ if [[ "$1" && "$1" != - ]]; then
     task_spec="$1"
     shift 1
 else
-    task_spec=${task}-spec.yaml
+    task_spec=${task}.yaml
 fi
 
 other_args="$@"
 
 for i in 288.5 266 304; do
     suffix=${i}_`date +%F-%T`
-    task_spec_suffixed=${task_spec%-spec.yaml}-spec-${suffix}.yaml
+    task_spec_suffixed=${task_spec%.yaml}-${suffix}.yaml
     job=`python -c "
 import os
 os.chdir('INPUT')

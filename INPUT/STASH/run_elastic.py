@@ -18,27 +18,30 @@ if __name__ == '__main__':
 
     enter_main_dir(run_spec)
     filedump(run_spec, filename)
-    properties = fileload('../properties.json')
-    V0 = properties['V0']
     incar = read_incar(run_spec)
-    kpoints = read_kpoints(run_spec)
-    is_mag = detect_is_mag(properties['mag'])
-    if is_mag:
-        incar.update({'ISPIN': 2})
-    else:
-        incar.update({'ISPIN': 1})
+    if os.path.isfile(('../properties.json')):
+        is_properties = True
+        properties = fileload('../properties.json')
 
-    if not incar['LWAVE']:
-        LWAVE = False
-        incar['LWAVE'] = True
+    if 'ISPIN' in incar:
+        is_mag = incar['ISPIN'] == 2
     else:
-        LWAVE = True
+        if is_properties:
+            is_mag = detect_is_mag(properties['mag'])
+            if is_mag:
+                incar.update({'ISPIN': 2})
+            else:
+                incar.update({'ISPIN': 1})
+        else:
+            is_mag = False
 
-    if os.path.isfile('../POSCAR'):
-        structure = mg.Structure.from_file('../POSCAR')
-    else:
+    # higher priority for run_spec
+    if 'poscar' in run_spec:
         structure = generate_structure(run_spec)
-        structure.scale_lattice(V0)
+    elif os.path.isfile('../POSCAR'):
+        structure = mg.Structure.from_file('../POSCAR')
+
+    kpoints = read_kpoints(run_spec, structure)
 
     combined_econst_array = []
     fitting_results_summary = {}
@@ -84,7 +87,7 @@ if __name__ == '__main__':
             if is_mag:
                 mag[ind+1] = oszicar.ionic_steps[-1]['mag']
 
-        if not LWAVE:
+        if 'LWAVE' not in incar:
             os.remove('WAVECAR')
         fitting_results = pydass_vasp.fitting.curve_fit(central_poly, delta, energy, save_figs=True,
                     output_prefix=test_type)
@@ -101,9 +104,12 @@ if __name__ == '__main__':
         shutil.copy(test_type + '.pdf', '..')
         os.chdir('..')
 
-    combined_econst_array = np.array(combined_econst_array) * 160.2 / V0
+    combined_econst_array = np.array(combined_econst_array) * 160.2 / structure.volume
     solved = solve(cryst_sys, combined_econst_array)
     filedump(solved, 'elastic.json')
 
-    properties['elastic'] = solved
-    filedump(properties, '../properties.json')
+    if is_properties:
+        # load again immediately before save
+        properties = fileload('../properties.json')
+        properties['elastic'] = solved
+        filedump(properties, '../properties.json')

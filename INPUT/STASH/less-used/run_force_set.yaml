@@ -1,9 +1,9 @@
-elem_types: [Ti_sv, V_sv, N]
+elem_types: [Ti_sv, N]
 structure: rocksalt
 run_subdir: run_force_set
 pot_type: PAW_PBE
 incar:
-  ENCUT: 500
+  ENCUT: 520
   PREC: Accurate
   ISPIN: 1
   ISMEAR: 1
@@ -18,7 +18,7 @@ incar:
   LWAVE: False
 kpoints:
   mode: M
-  divisions: [9, 9, 5]
+  divisions: [9, 9, 9]
 phonopy:
   dim: [1, 1, 1]
   mp: [31, 31, 31]

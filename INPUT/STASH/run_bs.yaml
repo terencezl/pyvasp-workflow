@@ -21,6 +21,8 @@ incar:
 kpoints:
   mode: M
   divisions: [6, 6, 6]
+# poscar:
+  # template: POSCAR-diamond
 bs:
   incar:
     ICHARG: 11

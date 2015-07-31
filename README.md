@@ -34,10 +34,22 @@ How to Run
 I assume your supercomputer cluster is using a queueing system to manage multi-users, which is the common practice in the field. If not, the job script is not needed, and the deploy trigger file needs to be adjusted.
 
 0. Edit the files in `INPUT/` as below.
-1. `run_module.py` has a few functions shared by other Python routine description files. Take a look around and find out what you can use. Point variables `POTENTIAL_DATABASE` and `VASP` in the beginning to your machine's configuration.
+1. `run_module.py` has a few functions shared by other Python routine description files. Take a look around and find out what you can use. See the two lines:
 
-  * `POTENTIAL_DATABASE` is a directory that have sub-directories such as `PAW_LDA`, `PAW_PBE`, which contain proprietory potential files like `H/POTCAR`, `Na_sv/POTCAR`. The `POTCAR` files should not be in the zipped form (like in older distributions of VASP potentials).
+   ```python
+   VASP = os.getenv('VASP', 'PATH-TO-YOUR-VASP-EXECUTABLE-default')
+   POTENTIAL_DATABASE = os.getenv('POTENTIAL_DATABASE', 'PATH-TO-YOUR-POTENTIAL_DATABASE-default')
+   ```
+
+   Point variables `POTENTIAL_DATABASE` and `VASP` to your machine's configuration. You can either directly change the `'PATH-TO-YOUR-*-default'` in `run_module.py`, or add the following lines to your `.bashrc` so that `run_module.py` can automatically finds them.
+
+   ```bash
+   export VASP='PATH-TO-YOUR-VASP-EXECUTABLE'
+   export POTENTIAL_DATABASE='PATH-TO-YOUR-POTENTIAL_DATABASE'
+   ```
+
   * `VASP` is the vasp executing command you would use in a shell. If mpi is used, don't forget to put it like `'mpirun vasp'`.
+  * `POTENTIAL_DATABASE` is a directory that have sub-directories such as `PAW_LDA`, `PAW_PBE`, which contain proprietory potential files like `H/POTCAR`, `Na_sv/POTCAR`. The `POTCAR` files should not be in the zipped form (like in older distributions of VASP potentials).
 
 2. Write up/alter the `.py` routine description file, to set up the basic flow of a set of runs you wish to conduct in a single job submission (one record in the supercomputer queueing system, having a given walltime).
 3. Write up/alter the `.yaml` setting file, and provide the necessary information about this run, including `INCAR` tags, `KPOINTS` parameters, `POTCAR` types, involved elements, structure name, `POSCAR` parameters, etc. How you provide them highly depends on how you write your `.py` routine file. You can even omit the `.yaml` file and hardcode parameters into the `.py` routine file, but that would not give you a nice separation of layers.
@@ -47,7 +59,7 @@ I assume your supercomputer cluster is using a queueing system to manage multi-u
    
    For PBS, the M file is simple.
    
-   ```
+   ```bash
    #!/usr/bin/env bash
    qsub $@
    ```

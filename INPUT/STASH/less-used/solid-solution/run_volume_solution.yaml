@@ -20,7 +20,7 @@ incar:
   LWAVE: False
 kpoints:
   mode: M
-  divisions: [9, 9, 5]
+  divisions: [9, 9, 9]
 poscar:
   template: POSCAR-rocksalt
 volume:

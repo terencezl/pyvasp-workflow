@@ -21,6 +21,8 @@ incar:
 kpoints:
   mode: G
   divisions: [5, 5, 5]
+# poscar:
+  # template: POSCAR-pyrite
 dos:
   incar:
     ICHARG: 11

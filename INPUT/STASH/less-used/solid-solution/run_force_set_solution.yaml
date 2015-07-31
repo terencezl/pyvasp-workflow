@@ -17,7 +17,7 @@ incar:
   LWAVE: False
 kpoints:
   mode: M
-  divisions: [9, 9, 5]
+  divisions: [9, 9, 9]
 phonopy:
   dim: [1, 1, 1]
   mp: [31, 31, 31]

@@ -16,8 +16,8 @@ except ValueError:
   pass
 import pymatgen as mg
 
-POTENTIAL_DATABASE = 'PATH-TO-YOUR-POTENTIAL-DATABASE'
-VASP = 'PATH-TO-YOUR-EXECUTABLE'
+VASP = os.getenv('VASP', 'PATH-TO-YOUR-VASP-EXECUTABLE-default')
+POTENTIAL_DATABASE = os.getenv('POTENTIAL_DATABASE', 'PATH-TO-YOUR-POTENTIAL_DATABASE-default')
 
 template_dir = os.path.join(os.getcwd(), 'INPUT/TEMPLATES')
 

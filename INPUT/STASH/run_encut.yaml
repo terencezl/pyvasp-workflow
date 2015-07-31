@@ -21,6 +21,6 @@ incar:
 kpoints:
   mode: G
   divisions: [8, 8, 8]
-poscar:
-  template: POSCAR-diamond
+# poscar:
+  # template: POSCAR-diamond
 encut_change: [320, 330, 340, 350, 360, 370, 380, 390, 400]

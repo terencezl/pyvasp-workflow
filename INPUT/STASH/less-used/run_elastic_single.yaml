@@ -1,5 +1,5 @@
 elem_types: [Ti_sv, N]
-structure: rocksalt-conventional
+structure: rocksalt
 run_subdir: run_elastic
 pot_type: PAW_PBE
 incar:
@@ -20,7 +20,9 @@ incar:
   LWAVE: False
 kpoints:
   mode: M
-  divisions: [19, 19, 9]
+  divisions: [9, 9, 9]
+# poscar:
+  # template: POSCAR-rocksalt
 elastic:
   cryst_sys: cubic
   test_type: c44

@@ -64,4 +64,4 @@ I assume your supercomputer cluster is using a queueing system to manage multi-u
    qsub $@
    ```
 
-5. Go back one directory to the directory root, looking at `INPUT/`, and type in `INPUT/deploy.sh run_test`. If you create a `.yaml` file called `run_test_2.yaml`, do `INPUT/deploy.sh run_test run_test_2` to select your alternative setting file.
+5. Go back one directory to the directory root, looking at `INPUT/`, and type in `INPUT/deploy.sh run_test`. If you create a `.yaml` file called `run_test_2.yaml`, do `INPUT/deploy.sh run_test run_test_2.yaml` to select your alternative setting file.

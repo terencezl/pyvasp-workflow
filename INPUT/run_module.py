@@ -83,7 +83,7 @@ def read_incar(run_spec):
     """
     Read INCAR.
     """
-    incar = mg.io.vaspio.Incar()
+    incar = mg.io.vasp.Incar()
     if 'incar' in run_spec and run_spec['incar']:
         incar.update(run_spec['incar'])
     return incar
@@ -93,16 +93,16 @@ def read_kpoints(run_spec, structure=None):
     """
     Read KPOINTS.
     """
-    kpoints = mg.io.vaspio.Kpoints.automatic(5)
+    kpoints = mg.io.vasp.Kpoints.automatic(5)
     if 'kpoints' in run_spec and run_spec['kpoints']:
         kpoints_spec = run_spec['kpoints']
         if 'density'in kpoints_spec:
-            kpoints = mg.io.vaspio.Kpoints.automatic_density(structure, kpoints_spec['density'])
+            kpoints = mg.io.vasp.Kpoints.automatic_density(structure, kpoints_spec['density'])
         elif 'mode' in kpoints_spec:
             if kpoints_spec['mode'] == 'M':
-                kpoints = mg.io.vaspio.Kpoints.monkhorst_automatic(kpoints_spec['divisions'])
+                kpoints = mg.io.vasp.Kpoints.monkhorst_automatic(kpoints_spec['divisions'])
             elif kpoints_spec['mode'] == 'G':
-                kpoints = mg.io.vaspio.Kpoints.gamma_automatic(kpoints_spec['divisions'])
+                kpoints = mg.io.vasp.Kpoints.gamma_automatic(kpoints_spec['divisions'])
     return kpoints
 
 
@@ -121,11 +121,32 @@ def generate_structure(run_spec):
     """
     Generate pymatgen.Structure.
     """
+    is_template = None
+    is_material_id = None
     poscar_spec = run_spec['poscar']
     elem_types_struct = [re.sub(r'_.*', '', i) for i in run_spec['elem_types']]
-    if 'template' in poscar_spec and poscar_spec['template']:
-        poscar = mg.io.vaspio.Poscar.from_file(os.path.join(template_dir, poscar_spec['template']))
+    if 'template' in poscar_spec:
+        is_template = True
+        poscar = mg.io.vasp.Poscar.from_file(os.path.join(template_dir, poscar_spec['template']))
         structure = poscar.structure
+    elif 'material_id' in poscar_spec:
+        is_material_id = True
+        m = mg.MPRester()
+        structure = m.get_structure_by_material_id(poscar_spec['material_id'])
+        if 'get_structure_how' in poscar_spec:
+            spa = mg.symmetry.analyzer.SpacegroupAnalyzer(structure, symprec=0.01)
+            if poscar_spec['get_structure'] == 'sorted':
+                structure = structure.get_sorted_structure()
+            elif poscar_spec['get_structure'] == 'primitive':
+                structure = structure.get_primitive_structure()
+            elif poscar_spec['get_structure'] == 'primitive_standard':
+                structure = spa.get_primitive_standard_structure()
+            elif poscar_spec['get_structure'] == 'conventional_standard':
+                structure = spa.get_conventional_standard_structure()
+            elif poscar_spec['get_structure'] == 'refined':
+                structure = spa.get_refined_structure()
+
+    if is_template or is_material_id:
         for i, item in enumerate(structure.symbol_set):
             structure.replace_species({item: elem_types_struct[i]})
         if 'volume' in poscar_spec:

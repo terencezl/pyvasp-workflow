@@ -23,7 +23,7 @@ if __name__ == '__main__':
             else:
                 incar.update({'ISPIN': 1})
     # empty kpoints to begin with
-    kpoints = mg.io.vaspio.Kpoints()
+    kpoints = mg.io.vasp.Kpoints()
 
     # higher priority for run_spec
     if 'poscar' in run_spec:
@@ -44,7 +44,7 @@ if __name__ == '__main__':
         structure.to(filename='POSCAR')
         write_potcar(run_spec)
         run_vasp()
-        oszicar = mg.io.vaspio.Oszicar('OSZICAR')
+        oszicar = mg.io.vasp.Oszicar('OSZICAR')
         energy[i] = oszicar.final_energy
 
     energy /= structure.num_sites

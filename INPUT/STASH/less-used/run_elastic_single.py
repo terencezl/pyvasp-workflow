@@ -61,7 +61,7 @@ if __name__ == '__main__':
                 structure_copy.to(filename='POSCAR')
                 write_potcar(run_spec)
                 run_vasp()
-                oszicar = mg.io.vaspio.Oszicar('OSZICAR')
+                oszicar = mg.io.vasp.Oszicar('OSZICAR')
                 energy[ind] = oszicar.final_energy
                 if is_mag:
                     mag[ind] = oszicar.ionic_steps[-1]['mag']

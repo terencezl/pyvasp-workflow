@@ -39,11 +39,10 @@ if __name__ == '__main__':
 
     # second non-SC run
     incar.update(run_spec['dos']['incar'])
-    kpoints.kpts = [run_spec['dos']['kpoints']['divisions']]
+    kpoints = read_kpoints(run_spec['dos'], structure)
     structure = mg.Structure.from_file('CONTCAR')
 
     incar.write_file('INCAR')
     kpoints.write_file('KPOINTS')
     structure.to(filename='POSCAR')
-    write_potcar(run_spec)
     run_vasp()

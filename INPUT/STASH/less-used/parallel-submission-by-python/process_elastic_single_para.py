@@ -34,7 +34,7 @@ if __name__ == '__main__':
             mag = np.zeros(len(delta))
             for ind, value in enumerate(delta):
                 chdir(str(value))
-                oszicar = mg.io.vaspio.Oszicar('OSZICAR')
+                oszicar = mg.io.vasp.Oszicar('OSZICAR')
                 energy[ind] = oszicar.final_energy
                 if is_mag:
                     mag[ind] = oszicar.ionic_steps[-1]['mag']

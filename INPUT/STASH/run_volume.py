@@ -20,7 +20,7 @@ def volume_fitting(run_spec, incar, kpoints, structure, V_begin, V_end, V_sample
         structure.to(filename='POSCAR')
         write_potcar(run_spec)
         run_vasp()
-        oszicar = mg.io.vaspio.Oszicar('OSZICAR')
+        oszicar = mg.io.vasp.Oszicar('OSZICAR')
         energy[i] = oszicar.final_energy
         structure = mg.Structure.from_file('CONTCAR')
         poscars.append(structure.as_dict())
@@ -108,7 +108,7 @@ if __name__ == '__main__':
     structure.to(filename='POSCAR')
     write_potcar(run_spec)
     run_vasp()
-    oszicar = mg.io.vaspio.Oszicar('OSZICAR')
+    oszicar = mg.io.vasp.Oszicar('OSZICAR')
     energy = oszicar.final_energy
     if is_mag:
         mag = oszicar.ionic_steps[-1]['mag']

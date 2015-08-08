@@ -4,7 +4,7 @@ import shutil
 import numpy as np
 from run_module import *
 import pymatgen as mg
-
+import pymatgen.electronic_structure.plotter
 
 if __name__ == '__main__':
     filename = sys.argv[1]
@@ -30,20 +30,24 @@ if __name__ == '__main__':
 
     kpoints = read_kpoints(run_spec, structure)
 
-    # first SC run
+    # first DFT run
     incar.write_file('INCAR')
     kpoints.write_file('KPOINTS')
     structure.to(filename='POSCAR')
     write_potcar(run_spec)
     run_vasp()
 
-    # second non-SC run
+    # second hybrid run
     structure = mg.Structure.from_file('CONTCAR')
-    incar.update(run_spec['bs']['incar'])
+    incar.update(run_spec['bs_hybrid']['incar'])
     # obtain the automatically generated kpoints list
     hskp = mg.symmetry.bandstructure.HighSymmKpath(structure)
-    kpoints = mg.io.vasp.Kpoints.automatic_linemode(run_spec['bs']['kpoints_division'], hskp)
-    kpoints.comment = ','.join(['-'.join(i) for i in hskp.kpath['path']])
+    kpts_bs = hskp.get_kpoints(run_spec['bs_hybrid']['kpoints_division'], return_cartesian=False)
+    kpoints = mg.io.vasp.Kpoints.from_file('IBZKPT')
+    kpoints.kpts.extend([i.tolist() for i in kpts_bs[0]])
+    kpoints.kpts_weights.extend([0 for i in kpts_bs[0]])
+    kpoints.labels.extend(kpts_bs[1])
+    kpoints.num_kpts += len(kpts_bs[0])
 
     incar.write_file('INCAR')
     kpoints.write_file('KPOINTS')
@@ -51,6 +55,6 @@ if __name__ == '__main__':
     run_vasp()
 
     # vasprun = mg.io.vasp.Vasprun('vasprun.xml')
-    # bs = vasprun.get_band_structure()
+    # bs = vasprun.get_band_structure(line_mode=True)
     # bsp = mg.electronic_structure.plotter.BSPlotter(bs)
     # bsp.save_plot('BS.pdf', 'pdf')

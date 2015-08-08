@@ -53,12 +53,12 @@ if __name__ == '__main__':
     structure.to(filename='POSCAR')
     write_potcar(run_spec)
     run_vasp()
-    oszicar = mg.io.vaspio.Oszicar('OSZICAR')
+    oszicar = mg.io.vasp.Oszicar('OSZICAR')
     energy_nostrain = oszicar.final_energy
     structure = mg.Structure.from_file('CONTCAR')
     if is_mag:
         mag_nostrain = oszicar.ionic_steps[-1]['mag']
-    if not LWAVE:
+    if 'LWAVE' not in incar:
         os.remove('WAVECAR')
     os.chdir('..')
 
@@ -82,7 +82,7 @@ if __name__ == '__main__':
             structure_copy.to(filename='POSCAR')
             write_potcar(run_spec)
             run_vasp()
-            oszicar = mg.io.vaspio.Oszicar('OSZICAR')
+            oszicar = mg.io.vasp.Oszicar('OSZICAR')
             energy[ind+1] = oszicar.final_energy
             if is_mag:
                 mag[ind+1] = oszicar.ionic_steps[-1]['mag']

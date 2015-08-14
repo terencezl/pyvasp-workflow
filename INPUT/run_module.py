@@ -133,12 +133,12 @@ def generate_structure(run_spec):
         is_material_id = True
         m = mg.MPRester()
         structure = m.get_structure_by_material_id(poscar_spec['material_id'])
-        if 'get_structure_how' in poscar_spec:
+        if 'get_structure' in poscar_spec:
             spa = mg.symmetry.analyzer.SpacegroupAnalyzer(structure, symprec=0.01)
             if poscar_spec['get_structure'] == 'sorted':
                 structure = structure.get_sorted_structure()
             elif poscar_spec['get_structure'] == 'primitive':
-                structure = structure.get_primitive_structure()
+                structure = structure.get_primitive_structure(0.01)
             elif poscar_spec['get_structure'] == 'primitive_standard':
                 structure = spa.get_primitive_standard_structure()
             elif poscar_spec['get_structure'] == 'conventional_standard':

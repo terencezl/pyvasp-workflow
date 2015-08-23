@@ -3,12 +3,10 @@ import sys
 import shutil
 import numpy as np
 from run_module import *
+from run_module_elastic import *
 import pymatgen as mg
 import pydass_vasp
 
-
-def central_poly(X, a, b, c):
-    return b * X**3 + a * X**2 + c
 
 if __name__ == '__main__':
     filename = sys.argv[1]

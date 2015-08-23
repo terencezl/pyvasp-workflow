@@ -1,11 +1,10 @@
-elem_types: [Ti_sv, N]
-structure: rocksalt
-run_subdir: run_volume
+run_dir: test/run_volume
+elem_types: [Ti, N]
 pot_type: PAW_PBE
 incar:
   ENCUT: 400
   PREC: Normal
-  ISPIN: 2
+  ISPIN: 1
   ISMEAR: 1
   SIGMA: 0.1
   EDIFF: 1e-06
@@ -19,11 +18,11 @@ incar:
   LCHARG: False
   LWAVE: False
 kpoints:
-  mode: M
-  divisions: [17, 17, 17]
+  density: 1000
 poscar:
-  template: POSCAR-rocksalt
-volume:
-  begin: 15
-  end:   25
-  sample_point_num: 5
+  material_id: mp-492
+  use_structure_elem_types: True
+# volume:
+  # begin: 15
+  # end:   25
+  # sample_point_num: 5

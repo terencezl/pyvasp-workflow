@@ -46,3 +46,9 @@ if __name__ == '__main__':
     kpoints.write_file('KPOINTS')
     structure.to(filename='POSCAR')
     run_vasp()
+
+    vasprun = mg.io.vasp.Vasprun('vasprun.xml')
+    dos = vasprun.tdos
+    dosp = mg.electronic_structure.plotter.DosPlotter()
+    dosp.add_dos(dos)
+    dosp.save_plot('DOS.pdf', 'pdf')

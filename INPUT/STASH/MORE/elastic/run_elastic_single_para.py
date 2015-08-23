@@ -3,13 +3,11 @@ import sys
 import shutil
 import numpy as np
 from run_module import *
+from run_module_elastic import *
 import pymatgen as mg
 import pydass_vasp
 from subprocess import call
 
-
-def central_poly(X, a, b, c):
-    return b * X**3 + a * X**2 + c
 
 if __name__ == '__main__':
     filename = sys.argv[1]
@@ -23,21 +21,21 @@ if __name__ == '__main__':
     filedump(run_spec, filename)
 
     incar = read_incar(run_spec)
+    is_properties = None
     if os.path.isfile(('../properties.json')):
         is_properties = True
         properties = fileload('../properties.json')
 
     if 'ISPIN' in incar:
         is_mag = incar['ISPIN'] == 2
-    else:
-        if is_properties:
-            is_mag = detect_is_mag(properties['mag'])
-            if is_mag:
-                incar.update({'ISPIN': 2})
-            else:
-                incar.update({'ISPIN': 1})
+    elif is_properties:
+        is_mag = detect_is_mag(properties['mag'])
+        if is_mag:
+            incar.update({'ISPIN': 2})
         else:
-            is_mag = False
+            incar.update({'ISPIN': 1})
+    else:
+        is_mag = False
 
     # higher priority for run_spec
     if 'poscar' in run_spec:
@@ -64,7 +62,7 @@ if __name__ == '__main__':
                 write_potcar(run_spec)
                 job = test_type + '-' + str(value)
                 shutil.copy(cwd + '/INPUT/deploy.job', job)
-                call('sed -i "/python/c time ' + VASP + ' 2>&1 | tee -a stdout" ' + job, shell=True)
+                call('sed -i "/python/c time ' + VASP_EXEC + ' 2>&1 | tee -a stdout" ' + job, shell=True)
                 call('M ' + job, shell=True)
                 os.remove(job)
                 os.chdir('..')

@@ -8,21 +8,23 @@ import yaml
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 import datetime
-try:
-  plt.style.use('research')
-except ValueError:
-  pass
 import pymatgen as mg
 
-VASP = os.getenv('VASP', 'PATH-TO-YOUR-VASP-EXECUTABLE-default')
-POTENTIAL_DATABASE = os.getenv('POTENTIAL_DATABASE', 'PATH-TO-YOUR-POTENTIAL_DATABASE-default')
-
-template_dir = os.path.join(os.getcwd(), 'INPUT/TEMPLATES')
+# environmental variable or manual setting these lines required
+VASP_EXEC = os.getenv('VASP_EXEC', 'OR-PATH-TO-YOUR-VASP-EXEC-default')
+VASP_POTENTIALS_DIR = os.getenv('VASP_POTENTIALS_DIR', 'OR-PATH-TO-YOUR-VASP_POTENTIALS_DIR-default')
+# environmental variable optional, default to INPUT/TEMPLATES
+VASP_TEMPLATES_DIR = os.getenv('VASP_TEMPLATES_DIR', os.path.join(os.getcwd(), 'INPUT/TEMPLATES'))
 
 
 def fileload(filename):
+    """
+
+    Loads a json or yaml file, determined by the extension.
+
+    """
+
     with open(filename, 'r') as f:
         if filename.endswith('.json'):
             file_dict = json.load(f)
@@ -32,47 +34,72 @@ def fileload(filename):
 
 
 def filedump(dict_to_file, filename):
+    """
+
+    Dumps a json or yaml file, determined by the extension. Indentation of json
+    and flow style of yaml is set.
+
+    """
+
     with open(filename, 'w') as f:
         if filename.endswith('.json'):
             json.dump(dict_to_file, f, indent=4)
         elif filename.endswith('.yaml'):
             yaml.dump(dict_to_file, f, default_flow_style=False)
-        else:
-            raise IOError("Can't read file!")
 
 
 def chdir(dirname):
-    try:
-        os.makedirs(dirname)
-    except OSError:
-        if not os.path.isdir(dirname):
-            raise OSError
+    """
+
+    Enters a path. If it does not exist, create one recursively and enter.
+
+    """
+
+    os.makedirs(dirname, exist_ok=True)
     os.chdir(dirname)
 
 
 def init_stdout():
     """
-    Empty the stdout file and record working directory.
+
+    Creates a new stdout file and record working directory.
+
     """
+
     stdout_str = 'stdout_' + datetime.datetime.now().isoformat(sep='-') + '.out'
     call('echo "Working directory: $PWD" | tee stdout', shell=True)
 
 
 def enter_main_dir(run_spec):
     """
-    Enter the run directory.
+
+    Enters the run directory.
+
+    If 'run_dir' is in the yaml file, use that. Otherwise, use a naming
+    scheme that combines 'structure', 'elem_types' and 'run_subdir'.
+
     """
-    dirname = run_spec['structure'] + '-' + '+'.join(run_spec['elem_types'])
-    chdir(os.path.join(dirname, run_spec['run_subdir']))
+
+    if 'run_dir' in run_spec:
+        dirname = run_spec['run_dir']
+    elif 'structure' in run_spec and 'run_subdir' in run_spec:
+        dirname = run_spec['structure'] + '-' + '+'.join(run_spec['elem_types'])
+        dirname = os.path.join(dirname, run_spec['run_subdir'])
+    chdir(dirname)
 
 
 def run_vasp():
     """
-    Run vasp.
+
+    Runs VASP, times it, prints out to screen, and appends it to a file named
+    'stdout'. You need to set the VASP_EXEC environmental variable, or edit
+    the head of this file to be able to use it.
+
     """
+
     time_format = ' "\n----------\nreal     %E" '
     time = '/usr/bin/time -f ' + time_format
-    run = call(time + VASP + ' 2>&1 | tee -a stdout', shell=True)
+    run = call(time + VASP_EXEC + ' 2>&1 | tee -a stdout', shell=True)
     if run != 0:
         sys.exit(1)
     hbreak = ' "\n' + '=' * 100 + '\n" '
@@ -81,8 +108,12 @@ def run_vasp():
 
 def read_incar(run_spec):
     """
-    Read INCAR.
+
+    Reads contents of 'incar' from the yaml file. If 'incar' does not exist,
+    return an empty Incar object, still functional.
+
     """
+
     incar = mg.io.vasp.Incar()
     if 'incar' in run_spec and run_spec['incar']:
         incar.update(run_spec['incar'])
@@ -91,64 +122,124 @@ def read_incar(run_spec):
 
 def read_kpoints(run_spec, structure=None):
     """
-    Read KPOINTS.
+
+    Reads contents of 'kpoints' from the yaml file. If 'kpoints' does not
+    exist, return an automatic (A) mesh with 5 subdivisions along each
+    reciprocal vector.
+
+    If 'kpoints' exists, it follows the sequence below.
+
+    If 'density' exists in 'kpoints', automatic density mesh is returned, with
+    density being KPPRA. In this case you need to provide the structure as an
+    argument. 'force_gamma' can be specified to True.
+
+    Otherwise, if 'mode' exists in 'kpoints', and it starts with 'M' or 'G',
+    MP mesh or Gamma-centered mesh is returned with specified 'divisions' as a
+    list.
+
     """
+
     kpoints = mg.io.vasp.Kpoints.automatic(5)
     if 'kpoints' in run_spec and run_spec['kpoints']:
         kpoints_spec = run_spec['kpoints']
         if 'density'in kpoints_spec:
-            kpoints = mg.io.vasp.Kpoints.automatic_density(structure, kpoints_spec['density'])
+            if 'force_gamma'in kpoints_spec:
+                force_gamma = kpoints_spec['force_gamma']
+            else:
+                force_gamma = False
+            kpoints = mg.io.vasp.Kpoints.automatic_density(structure, kpoints_spec['density'],
+                force_gamma=force_gamma)
         elif 'mode' in kpoints_spec:
-            if kpoints_spec['mode'] == 'M':
+            if kpoints_spec['mode'].upper().startswith('M'):
                 kpoints = mg.io.vasp.Kpoints.monkhorst_automatic(kpoints_spec['divisions'])
-            elif kpoints_spec['mode'] == 'G':
+            elif kpoints_spec['mode'].upper().startswith('G'):
                 kpoints = mg.io.vasp.Kpoints.gamma_automatic(kpoints_spec['divisions'])
     return kpoints
 
 
-def write_potcar(run_spec):
-    """
-    Write POTCAR.
-    """
-    potential_base = os.path.join(POTENTIAL_DATABASE, run_spec['pot_type'])
-    with open('POTCAR', 'wb') as outfile:
-        for filename in [os.path.join(potential_base, e, 'POTCAR') for e in run_spec['elem_types']]:
-            with open(filename, 'rb') as infile:
-                shutil.copyfileobj(infile, outfile)
-
-
 def generate_structure(run_spec):
     """
-    Generate pymatgen.Structure.
+
+    Generates pymatgen.Structure. There are many ways to get a structure. They
+    are all specified under 'poscar' in the yaml file.
+
+    If 'template' is present in 'poscar', you can either set the
+    VASP_TEMPLATES_DIR environmental variable, or just leave it to the default
+    'INPUT/TEMPLATES'. After that, this specified POSCAR-type template file path
+    will be used to obtain the structure from the VASP_TEMPLATES_DIR, and a
+    structure is returned.
+
+    If 'material_id' is present in 'poscar', MAPI_KEY environmental variable
+    needs to be set according to the Materials Project (materialsproject.org).
+    An optional 'get_structure' can be set to one of ['sorted', 'reduced',
+    'primitive', 'primitive_standard', 'conventional_standard', 'refined'].
+    Please refer to the actual code of this function to see what they are
+    exactly.
+
+    For the above two ways, by default, the element types in the structure will
+    be replaced according to 'elem_types' in the yaml file, but you have to make
+    sure the element type sequences of the structure and 'elem_types' are right.
+    If on the other hand, you want to skip specifying 'elem_types' and simply
+    use the element types in the structure, set 'use_structure_elem_types' to
+    True, and 'elem_types' will be ignored even provided.
+
+    An optional 'volume' can be set to scale the structure of the template.
+
+    If neither of the above is present, the manual generation from spacegroup
+    is done by specifying
+
+    'spacegroup' (international number or symbol)
+
+    'cryst_sys' (one of the seven)
+
+    'lattice_params' ('a', 'b', 'c', 'alpha', 'beta', 'gamma', some of which
+    'can be omitted because of a more symmetric crystallographic system)
+
+    'atoms_multitude' (multitude of atoms of the same element type in a list,
+    'the order following 'elem_types'. Only symmetrically distinct species and
+    'coords should be provided, according to the Wychoff positions)
+
+    'atoms_direct_coords' (direct locations, relative to the lattice vectors
+    'of the symmetrically distinct atoms. There should be the same number of
+    'them as the sum of atoms_multitude)
+
+    Yeah, it's cumbersome. So why don't you just use the first two easier ways?
+
     """
+
     is_template = None
     is_material_id = None
     poscar_spec = run_spec['poscar']
     elem_types_struct = [re.sub(r'_.*', '', i) for i in run_spec['elem_types']]
     if 'template' in poscar_spec:
         is_template = True
-        poscar = mg.io.vasp.Poscar.from_file(os.path.join(template_dir, poscar_spec['template']))
+        poscar = mg.io.vasp.Poscar.from_file(os.path.join(VASP_TEMPLATES_DIR, poscar_spec['template']))
         structure = poscar.structure
     elif 'material_id' in poscar_spec:
         is_material_id = True
         m = mg.MPRester()
         structure = m.get_structure_by_material_id(poscar_spec['material_id'])
         if 'get_structure' in poscar_spec:
-            spa = mg.symmetry.analyzer.SpacegroupAnalyzer(structure, symprec=0.01)
+            sga = mg.symmetry.analyzer.SpacegroupAnalyzer(structure, symprec=0.01)
             if poscar_spec['get_structure'] == 'sorted':
                 structure = structure.get_sorted_structure()
+            if poscar_spec['get_structure'] == 'reduced':
+                structure = structure.get_reduced_structure()
             elif poscar_spec['get_structure'] == 'primitive':
                 structure = structure.get_primitive_structure(0.01)
             elif poscar_spec['get_structure'] == 'primitive_standard':
-                structure = spa.get_primitive_standard_structure()
+                structure = sga.get_primitive_standard_structure()
             elif poscar_spec['get_structure'] == 'conventional_standard':
-                structure = spa.get_conventional_standard_structure()
+                structure = sga.get_conventional_standard_structure()
             elif poscar_spec['get_structure'] == 'refined':
-                structure = spa.get_refined_structure()
+                structure = sga.get_refined_structure()
 
     if is_template or is_material_id:
-        for i, item in enumerate(structure.symbol_set):
-            structure.replace_species({item: elem_types_struct[i]})
+        if 'use_structure_elem_types' in poscar_spec and poscar_spec['use_structure_elem_types']:
+            run_spec['elem_types'] = list(structure.symbol_set)
+        else:
+            for i, item in enumerate(structure.symbol_set):
+                structure.replace_species({item: elem_types_struct[i]})
         if 'volume' in poscar_spec:
             structure.scale_lattice(run_spec['poscar']['volume'])
         return structure
@@ -174,178 +265,40 @@ def generate_structure(run_spec):
 
     elem_types_struct_multi = []
     for i, elem in enumerate(elem_types_struct):
-        elem_types_struct_multi.extend([elem] * poscar_spec['atoms_multi'][i])
+        elem_types_struct_multi.extend([elem] * poscar_spec['atoms_multitude'][i])
 
     structure = mg.Structure.from_spacegroup(poscar_spec['spacegroup'], lattice,
-            elem_types_struct_multi, poscar_spec['atoms_direct_locs'])
+            elem_types_struct_multi, poscar_spec['atoms_direct_coords'])
     return structure
 
 
-def detect_is_mag(mag):
-    if isinstance(mag, np.ndarray):
-        is_mag = (np.abs(mag) >= 0.001).any()
+def write_potcar(run_spec):
+    """
+
+    Writes POTCAR. Gets the POTCAR types from 'elem_types' in the yaml file.
+    You need to set the VASP_POTENTIALS_DIR environmental variable, or edit
+    the head of this file to be able to use it.
+
+    """
+
+    potential_base = os.path.join(VASP_POTENTIALS_DIR, run_spec['pot_type'])
+    with open('POTCAR', 'wb') as outfile:
+        for filename in [os.path.join(potential_base, e, 'POTCAR') for e in run_spec['elem_types']]:
+            with open(filename, 'rb') as infile:
+                shutil.copyfileobj(infile, outfile)
+
+
+def detect_is_mag(mag, tol=1e-3):
+    """
+
+    Detects if any of a list/numpy array, or a float/int value of magnetic
+    moments is larger than some criterion (tol optional argument). Returns the
+    boolean.
+
+    """
+
+    if isinstance(mag, list) or isinstance(mag, np.ndarray):
+        is_mag = (np.abs(mag) >= tol).any()
     elif isinstance(mag, float) or isinstance(mag, int):
-        is_mag = np.abs(mag) >= 0.001
+        is_mag = np.abs(mag) >= tol
     return is_mag
-
-
-def get_test_type_strain_delta_list(cryst_sys):
-    """
-    Generate elastic strain.
-    """
-    strain_list = []
-
-    if cryst_sys == 'cubic':
-        test_type_list = ["c11+2c12", "c11-c12", "c44"]
-        delta_list = np.ones(((3, 5))) * [0, -0.02, 0.02, -0.03, 0.03]
-        delta_list[0] = delta_list[0]/np.sqrt(3)
-
-        strain_list.append(lambda delta: np.array([[1 + delta, 0, 0],
-                                                   [0, 1 + delta, 0],
-                                                   [0, 0, 1 + delta]]))
-
-        strain_list.append(lambda delta: np.array([[1 + delta, 0, 0],
-                                                   [0, 1 - delta, 0],
-                                                   [0, 0, 1 + delta ** 2 / (1 - delta ** 2)]]))
-
-        strain_list.append(lambda delta: np.array([[1, delta/2, 0],
-                                                   [delta/2, 1, 0],
-                                                   [0, 0, 1 + delta ** 2 / (4 - delta ** 2)]]))
-
-    elif cryst_sys == 'hexagonal':
-        test_type_list = ["2c11+2c12+4c13+c33", "c11-c12", "c11+c12", "c44", "c33"]
-        delta_list = np.ones(((5, 5))) * [0, -0.02, 0.02, -0.03, 0.03]
-
-        strain_list.append(lambda delta: np.array([[1 + delta, 0, 0],
-                                                   [0, 1 + delta, 0],
-                                                   [0, 0, 1 + delta]]))
-
-        strain_list.append(lambda delta: np.array([[1 + delta, 0, 0],
-                                                   [0, 1 - delta, 0],
-                                                   [0, 0, 1]]))
-
-        strain_list.append(lambda delta: np.array([[1 + delta, 0, 0],
-                                                   [0, 1 + delta, 0],
-                                                   [0, 0, 1]]))
-
-        strain_list.append(lambda delta: np.array([[1, 0, 0],
-                                                   [0, 1, delta],
-                                                   [0, delta, 1]]))
-
-        strain_list.append(lambda delta: np.array([[1, 0, 0],
-                                                   [0, 1, 0],
-                                                   [0, 0, 1 + delta]]))
-
-    elif cryst_sys == 'tetragonal':
-        test_type_list = ["c11", "c33", "c44",
-                "5c11-4c12-2c13+c33", "c11+c12-4c13+2c33", "c11+c12-4c13+2c33+2c66"]
-        delta_list = np.ones(((6, 5))) * [0, -0.02, 0.02, -0.03, 0.03]
-        strain_list.append(lambda delta: np.array([[1 + delta, 0, 0],
-                                                   [0, 1, 0],
-                                                   [0, 0, 1]]))
-
-        strain_list.append(lambda delta: np.array([[1, 0, 0],
-                                                   [0, 1, 0],
-                                                   [0, 0, 1 + delta]]))
-
-        strain_list.append(lambda delta: np.array([[1, 0, 0],
-                                                   [0, 1, delta],
-                                                   [0, delta, 1]]))
-
-        strain_list.append(lambda delta: np.array([[1 + 2 * delta, 0, 0],
-                                                   [0, 1 - delta, 0],
-                                                   [0, 0, 1 - delta]]))
-
-        strain_list.append(lambda delta: np.array([[1 - delta, 0, 0],
-                                                   [0, 1 - delta, 0],
-                                                   [0, 0, 1 + 2 * delta]]))
-
-        strain_list.append(lambda delta: np.array([[1 + delta, delta, 0],
-                                                   [delta, 1 + delta, 0],
-                                                   [0, 0, 1 - 2 * delta]]))
-
-    elif cryst_sys == 'orthorhombic':
-        test_type_list = ["c11", "c22", "c33", "c44", "c55", "c66",
-            "4c11-4c12-4c13+c22+2c23+c33", "c11-4c12+2c13+4c22-4c23+c33", "c11+2c12-4c13+c22-4c23+4c33"]
-        delta_list = np.ones(((9, 5))) * [0, -0.02, 0.02, -0.03, 0.03]
-
-        strain_list.append(lambda delta: np.array([[1 + delta, 0, 0],
-                                                   [0, 1, 0],
-                                                   [0, 0, 1]]))
-
-        strain_list.append(lambda delta: np.array([[1, 0, 0],
-                                                   [0, 1 + delta, 0],
-                                                   [0, 0, 1]]))
-
-        strain_list.append(lambda delta: np.array([[1, 0, 0],
-                                                   [0, 1, 0],
-                                                   [0, 0, 1 + delta]]))
-
-        strain_list.append(lambda delta: np.array([[1, 0, 0],
-                                                   [0, 1, delta/2],
-                                                   [0, delta/2, 1]]))
-
-        strain_list.append(lambda delta: np.array([[1, 0, delta/2],
-                                                   [0, 1, 0],
-                                                   [delta/2, 0, 1]]))
-
-        strain_list.append(lambda delta: np.array([[1, delta/2, 0],
-                                                   [delta/2, 1, 0],
-                                                   [0, 0, 1]]))
-
-        strain_list.append(lambda delta: np.array([[1 + 2 * delta, 0, 0],
-                                                   [0, 1 - delta, 0],
-                                                   [0, 0, 1 - delta]]))
-
-        strain_list.append(lambda delta: np.array([[1 - delta, 0, 0],
-                                                   [0, 1 + 2 * delta, 0],
-                                                   [0, 0, 1 - delta]]))
-
-        strain_list.append(lambda delta: np.array([[1 - delta, delta, 0],
-                                                   [delta, 1 - delta, 0],
-                                                   [0, 0, 1 + 2 * delta]]))
-
-    return test_type_list, strain_list, delta_list
-
-
-def solve(cryst_sys, combined_econst_array):
-    """
-    Solve for the elastic constants from the matrix and coeffs.
-    """
-    if cryst_sys == 'cubic':
-        econsts_str = ["C11", "C12", "C44"]
-        coeff_matrix = np.array([[3/2., 3, 0],
-                                 [1, -1, 0],
-                                 [0, 0, 1/2.]])
-
-    elif cryst_sys == 'hexagonal':
-        econsts_str = ["C11", "C12", "C13", "C33", "C44"]
-        coeff_matrix = np.array([[1, 1, 2, 1/2., 0],
-                                 [1, -1, 0, 0, 0],
-                                 [1, 1, 0, 0, 0],
-                                 [0, 0, 0, 0, 2],
-                                 [0, 0, 0, 1/2., 0]])
-
-    elif cryst_sys == 'tetragonal':
-        econsts_str = ["C11", "C33", "C44", "C12", "C13", "C66"]
-        coeff_matrix = np.array([[1/2., 0, 0, 0, 0, 0],
-                                 [0, 1/2., 0, 0, 0, 0],
-                                 [0, 0, 2, 0, 0, 0],
-                                 [5 / 2., 1/2., 0, -2, -1, 0],
-                                 [1, 2, 0, 1, -4, 0],
-                                 [1, 2, 0, 1, -4, 2]])
-
-    elif cryst_sys == 'orthorhombic':
-        econsts_str = ["C11", "C22", "C33", "C44", "C55", "C66", "C12", "C13", "C23"]
-        coeff_matrix = np.array([[1/2., 0, 0, 0, 0, 0, 0, 0, 0],
-                                 [0, 1/2., 0, 0, 0, 0, 0, 0, 0],
-                                 [0, 0, 1/2., 0, 0, 0, 0, 0, 0],
-                                 [0, 0, 0, 1/2., 1, 0, 0, 0, 0],
-                                 [0, 0, 0, 0, 1/2., 0, 0, 0, 0],
-                                 [0, 0, 0, 0, 0, 1/2., 0, 0, 0],
-                                 [2, 1/2., 1/2., 0, 0, 0, -2, -2, 1],
-                                 [1/2., 2, 1/2., 0, 0, 0, -2, 1, -2],
-                                 [1/2., 1/2., 2, 0, 0, 0, 1, -2, -2]])
-
-    solved = np.linalg.solve(coeff_matrix, combined_econst_array)
-    return dict(zip(econsts_str, solved))

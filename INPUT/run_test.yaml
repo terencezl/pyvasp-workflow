@@ -1,18 +1,17 @@
-elem_types: [Ti_sv, N]
-structure: ZnS
-run_subdir: run_test
+run_dir: vasp/run_test
+elem_types: [Si, C]
 pot_type: PAW_PBE
 incar:
   ENCUT: 400
   PREC: Normal
   ISPIN: 1
-  ISMEAR: 1
-  SIGMA: 0.1
+  ISMEAR: 0
+  SIGMA: 0.05
   EDIFF: 1e-06
   NSW: 20
   IBRION: 2
-  ISIF: 4
-  POTIM: 0.1
+  ISIF: 3
+  POTIM: 0.2
   EDIFFG: -0.01
   KPAR: 3
   NPAR: 1
@@ -20,6 +19,11 @@ incar:
   LWAVE: False
 kpoints:
   mode: M
-  divisions: [13, 13, 7]
+  # divisions: [6, 6, 6]
+  density: 1000
+  # force_gamma: True
 poscar:
-  template: POSCAR-ZnS
+  template: POSCAR-zincblende
+  # material_id: mp-492
+  # get_structure: sorted
+  # use_structure_elem_types: True

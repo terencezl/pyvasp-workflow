@@ -20,32 +20,33 @@ if __name__ == '__main__':
     enter_main_dir(run_spec)
     filedump(run_spec, filename)
 
-    # for solution runs
-    if 'solution' in run_spec and 'ratio' in run_spec['solution']:
-        ratio = str(run_spec['solution']['ratio'])
-        ratio_list = [float(i) for i in ratio.split('-')]
-        if ratio_list[0] == 0 and ratio_list[1] == 1:
-            run_spec['elem_types'] = [run_spec['elem_types'][1], run_spec['elem_types'][2]]
-        elif ratio_list[0] == 1 and ratio_list[1] == 0:
-            run_spec['elem_types'] = [run_spec['elem_types'][0], run_spec['elem_types'][2]]
-
     incar = read_incar(run_spec)
-    kpoints = read_kpoints(run_spec)
-    properties = fileload('../properties.json')
-    if 'ISPIN' not in incar:
-        if detect_is_mag(properties['mag']):
-            incar.update({'ISPIN': 2})
-        else:
-            incar.update({'ISPIN': 1})
-    volume = np.round(np.array(properties['volume']), 2)
-    poscars = properties['poscars']
+    if os.path.isfile('../properties.json'):
+        properties = fileload('../properties.json')
+        if 'ISPIN' not in incar:
+            if detect_is_mag(properties['mag']):
+                incar.update({'ISPIN': 2})
+            else:
+                incar.update({'ISPIN': 1})
 
-    for V, poscar in zip(volume, poscars):
+    # higher priority for run_spec
+    if 'poscar' in run_spec:
+        structure = generate_structure(run_spec)
+    elif os.path.isfile('../POSCAR'):
+        structure = mg.Structure.from_file('../POSCAR')
+
+    kpoints = read_kpoints(run_spec, structure)
+
+    fitting_results = fileload('../run_volume/fitting_results.json')[-1]
+    volume = np.round(np.array(fitting_results['volume']), 2)
+    structures = fitting_results['structures']
+
+    for V, st in zip(volume, structures):
         chdir(str(V))
         init_stdout()
         incar.write_file('INCAR')
         kpoints.write_file('KPOINTS')
-        structure = mg.Structure.from_dict(poscar)
+        structure = mg.Structure.from_dict(st)
         structure.to(filename='POSCAR')
         call('phonopy -d --dim="' + phonopy_dim + '" > /dev/null', shell=True)
         os.rename('POSCAR', 'POSCAR_orig')
@@ -60,8 +61,8 @@ if __name__ == '__main__':
         os.chdir('..')
 
     # post processing
+    fitting_results = fileload('../run_volume/fitting_results.json')[-1]
+    e_v_dat = np.column_stack((fitting_results['volume'], fitting_results['energy']))
+    np.savetxt('../e-v.dat', e_v_dat, '%15.6f', header='volume energy')
     thermal_properties = ' '.join([str(i) + '/thermal_properties.yaml' for i in volume])
     call('phonopy-qha ../e-v.dat ' + thermal_properties + ' --tmax=' + phonopy_tmax + ' > /dev/null 2>&1', shell=True)
-    # gibbs = np.loadtxt('gibbs-temperature.dat').T.tolist()
-    # properties['gibbs'] = gibbs
-    # filedump(properties, '../properties.json')

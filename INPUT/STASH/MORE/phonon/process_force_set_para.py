@@ -18,8 +18,8 @@ if __name__ == '__main__':
     phonopy_tstep = str(run_spec['phonopy']['tstep'])
 
     enter_main_dir(run_spec)
-    properties = fileload('../properties.json')
-    volume = np.round(np.array(properties['volume']), 2)
+    fitting_results = fileload('../run_volume/fitting_results.json')[-1]
+    volume = np.round(np.array(fitting_results['volume']), 2)
 
     for V in volume:
         chdir(str(V))
@@ -30,8 +30,8 @@ if __name__ == '__main__':
         os.chdir('..')
 
     # post processing
+    fitting_results = fileload('../run_volume/fitting_results.json')[-1]
+    e_v_dat = np.column_stack((fitting_results['volume'], fitting_results['energy']))
+    np.savetxt('../e-v.dat', e_v_dat, '%15.6f', header='volume energy')
     thermal_properties = ' '.join([str(i) + '/thermal_properties.yaml' for i in volume])
     call('phonopy-qha ../e-v.dat ' + thermal_properties + ' --tmax=' + phonopy_tmax + ' > /dev/null 2>&1', shell=True)
-    # gibbs = np.loadtxt('gibbs-temperature.dat').T.tolist()
-    # properties['gibbs'] = gibbs
-    # filedump(properties, '../properties.json')

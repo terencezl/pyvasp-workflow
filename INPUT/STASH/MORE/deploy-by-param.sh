@@ -23,11 +23,17 @@ import os
 os.chdir('INPUT')
 from run_module import fileload, filedump
 run_spec = fileload('${task_spec}')
-run_spec['run_subdir'] += '-$i'
 run_spec['poscar']['volume'] = $i
 filedump(run_spec, '../${task_spec_suffixed}')
-print(run_spec['run_subdir'])
-    "`
+if 'run_dir' in run_spec:
+    run_spec['run_dir'] += '-$i'
+    print(run_spec['run_dir'].replace('/', '-'))
+elif 'run_subdir' in run_spec:
+    run_spec['run_subdir'] += '-$i'
+    print(run_spec['run_subdir'].replace('/', '-'))
+else:
+    print('vasp')
+"`
     cp INPUT/deploy.job "$job"
     sed -i "/python/c python INPUT/${task}.py $task_spec_suffixed $other_args" "$job"
     M "$job"

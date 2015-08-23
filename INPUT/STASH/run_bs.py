@@ -50,7 +50,7 @@ if __name__ == '__main__':
     structure.to(filename='POSCAR')
     run_vasp()
 
-    # vasprun = mg.io.vasp.Vasprun('vasprun.xml')
-    # bs = vasprun.get_band_structure()
-    # bsp = mg.electronic_structure.plotter.BSPlotter(bs)
-    # bsp.save_plot('BS.pdf', 'pdf')
+    vasprun = mg.io.vasp.Vasprun('vasprun.xml')
+    bs = vasprun.get_band_structure()
+    bsp = mg.electronic_structure.plotter.BSPlotter(bs)
+    bsp.save_plot('BS.pdf', 'pdf')

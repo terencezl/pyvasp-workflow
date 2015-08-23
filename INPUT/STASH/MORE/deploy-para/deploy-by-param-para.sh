@@ -13,21 +13,20 @@ else
     task_spec=${task}.yaml
 fi
 
-other_args="$@"
-
-for i in c11-c12 c44; do
-    # for j in 6 12; do
-        suffix=${i}_`date +%F-%T`
-        task_spec_suffixed=${task_spec%.yaml}-${suffix}.yaml
-        `python -c "
-import os
-os.chdir('INPUT')
-from run_module import fileload, filedump
+for i in 40 50 60; do
+    suffix=`date +%F-%T`_${i}
+    task_spec_suffixed=${task_spec##*/}
+    task_spec_suffixed=${task_spec_suffixed%.yaml}_${suffix}.yaml
+    python -c "
+from os import chdir
+chdir('INPUT')
+from run_module import fileload, filedump, get_run_dir
+chdir('..')
 run_spec = fileload('${task_spec}')
-# run_spec['run_subdir'] += '-$i'
-run_spec['elastic']['test_type'] = '$i'
-filedump(run_spec, '../${task_spec_suffixed}')
-        "`
-        python INPUT/${task}.py $task_spec_suffixed $other_args
-    # done
+# suffix the run directory and changing parameter
+run_spec['run_dir'] += '-$i'
+run_spec['poscar']['volume'] = $i
+filedump(run_spec, '${task_spec_suffixed}')
+"
+    python INPUT/${task}.py $task_spec_suffixed --remove_file
 done

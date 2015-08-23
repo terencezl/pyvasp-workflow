@@ -9,15 +9,13 @@ import pydass_vasp
 
 
 if __name__ == '__main__':
-    filename = sys.argv[1]
-    run_spec = fileload(filename)
-    os.remove(filename)
-    cryst_sys = run_spec['elastic']['cryst_sys']
-    test_type_input = run_spec['elastic']['test_type']
+    run_specs, filename = get_run_specs_and_filename()
+    chdir(get_run_dir(run_specs))
+    filedump(run_specs, filename)
 
-    enter_main_dir(run_spec)
-    filedump(run_spec, filename)
-    incar = read_incar(run_spec)
+    cryst_sys = run_specs['elastic']['cryst_sys']
+    test_type_input = run_specs['elastic']['test_type']
+    incar = read_incar(run_specs)
     is_properties = None
     if os.path.isfile(('../properties.json')):
         is_properties = True
@@ -34,13 +32,13 @@ if __name__ == '__main__':
     else:
         is_mag = False
 
-    # higher priority for run_spec
-    if 'poscar' in run_spec:
-        structure = generate_structure(run_spec)
+    # higher priority for run_specs
+    if 'poscar' in run_specs:
+        structure = generate_structure(run_specs)
     elif os.path.isfile('../POSCAR'):
         structure = mg.Structure.from_file('../POSCAR')
 
-    kpoints = read_kpoints(run_spec, structure)
+    kpoints = read_kpoints(run_specs, structure)
 
     test_type_list, strain_list, delta_list = get_test_type_strain_delta_list(cryst_sys)
     for test_type, strain, delta in zip(test_type_list, strain_list, delta_list):
@@ -57,7 +55,7 @@ if __name__ == '__main__':
                 structure_copy = structure.copy()
                 structure_copy.modify_lattice(lattice_modified)
                 structure_copy.to(filename='POSCAR')
-                write_potcar(run_spec)
+                write_potcar(run_specs)
                 run_vasp()
                 oszicar = mg.io.vasp.Oszicar('OSZICAR')
                 energy[ind] = oszicar.final_energy

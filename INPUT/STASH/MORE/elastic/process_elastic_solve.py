@@ -8,20 +8,18 @@ import pymatgen as mg
 import pydass_vasp
 
 if __name__ == '__main__':
-    filename = sys.argv[1]
-    run_spec = fileload(filename)
-    os.remove(filename)
-    cryst_sys = run_spec['poscar']['cryst_sys']
+    run_specs, filename = get_run_specs_and_filename()
+    chdir(get_run_dir(run_specs))
 
-    enter_main_dir(run_spec)
+    cryst_sys = run_specs['poscar']['cryst_sys']
     is_properties = None
     if os.path.isfile(('../properties.json')):
         is_properties = True
         properties = fileload('../properties.json')
 
-    # higher priority for run_spec
-    if 'poscar' in run_spec:
-        structure = generate_structure(run_spec)
+    # higher priority for run_specs
+    if 'poscar' in run_specs:
+        structure = generate_structure(run_specs)
     elif os.path.isfile('../POSCAR'):
         structure = mg.Structure.from_file('../POSCAR')
 

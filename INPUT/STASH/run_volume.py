@@ -18,7 +18,7 @@ def volume_fitting(structure, is_mag, fitting_results):
         kpoints.write_file('KPOINTS')
         structure.scale_lattice(V)
         structure.to(filename='POSCAR')
-        write_potcar(run_spec)
+        write_potcar(run_specs)
         run_vasp()
         oszicar = mg.io.vasp.Oszicar('OSZICAR')
         energy[i] = oszicar.final_energy
@@ -60,14 +60,12 @@ def volume_fitting(structure, is_mag, fitting_results):
 
 
 if __name__ == '__main__':
-    filename = sys.argv[1]
-    run_spec = fileload(filename)
-    os.remove(filename)
-    enter_main_dir(run_spec)
-    filedump(run_spec, filename)
+    run_specs, filename = get_run_specs_and_filename()
+    chdir(get_run_dir(run_specs))
+    filedump(run_specs, filename)
     init_stdout()
 
-    incar = read_incar(run_spec)
+    incar = read_incar(run_specs)
     is_properties = None
     if os.path.isfile(('../properties.json')):
         is_properties = True
@@ -84,16 +82,16 @@ if __name__ == '__main__':
     else:
         is_mag = False
 
-    # higher priority for run_spec
-    if 'poscar' in run_spec:
-        structure = generate_structure(run_spec)
+    # higher priority for run_specs
+    if 'poscar' in run_specs:
+        structure = generate_structure(run_specs)
     elif os.path.isfile('../POSCAR'):
         structure = mg.Structure.from_file('../POSCAR')
 
-    kpoints = read_kpoints(run_spec, structure)
+    kpoints = read_kpoints(run_specs, structure)
 
-    if 'volume' in run_spec and run_spec['volume']:
-        volume_params = run_spec['volume']
+    if 'volume' in run_specs and run_specs['volume']:
+        volume_params = run_specs['volume']
         V_begin = volume_params['begin']
         V_end = volume_params['end']
         V_sample_point_num = volume_params['sample_point_num']

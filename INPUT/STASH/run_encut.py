@@ -8,13 +8,11 @@ import pymatgen as mg
 
 
 if __name__ == '__main__':
-    filename = sys.argv[1]
-    run_spec = fileload(filename)
-    os.remove(filename)
-    enter_main_dir(run_spec)
-    filedump(run_spec, filename)
+    run_specs, filename = get_run_specs_and_filename()
+    chdir(get_run_dir(run_specs))
+    filedump(run_specs, filename)
     init_stdout()
-    incar = read_incar(run_spec)
+    incar = read_incar(run_specs)
     if os.path.isfile(('../properties.json')):
         properties = fileload('../properties.json')
         if 'ISPIN' not in incar:
@@ -23,15 +21,15 @@ if __name__ == '__main__':
             else:
                 incar.update({'ISPIN': 1})
 
-    # higher priority for run_spec
-    if 'poscar' in run_spec:
-        structure = generate_structure(run_spec)
+    # higher priority for run_specs
+    if 'poscar' in run_specs:
+        structure = generate_structure(run_specs)
     elif os.path.isfile('../POSCAR'):
         structure = mg.Structure.from_file('../POSCAR')
 
-    kpoints = read_kpoints(run_spec, structure)
+    kpoints = read_kpoints(run_specs, structure)
 
-    encut_params = run_spec['encut_change']
+    encut_params = run_specs['encut_change']
     if isinstance(encut_params, dict):
         encut_change = np.array(range(encut_params['begin'], encut_params['end'], encut_params['step']))
     elif isinstance(encut_params, list):
@@ -43,7 +41,7 @@ if __name__ == '__main__':
         incar.write_file('INCAR')
         kpoints.write_file('KPOINTS')
         structure.to(filename='POSCAR')
-        write_potcar(run_spec)
+        write_potcar(run_specs)
         run_vasp()
         oszicar = mg.io.vasp.Oszicar('OSZICAR')
         energy[i] = oszicar.final_energy

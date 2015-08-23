@@ -9,13 +9,11 @@ import pydass_vasp
 
 
 if __name__ == '__main__':
-    filename = sys.argv[1]
-    run_spec = fileload(filename)
-    os.remove(filename)
-    test_type_input = run_spec['elastic']['test_type']
-    cryst_sys = run_spec['elastic']['cryst_sys']
+    run_specs, filename = get_run_specs_and_filename()
+    chdir(get_run_dir(run_specs))
 
-    enter_main_dir(run_spec)
+    test_type_input = run_specs['elastic']['test_type']
+    cryst_sys = run_specs['elastic']['cryst_sys']
     if 'ISPIN' in incar:
         is_mag = incar['ISPIN'] == 2
     elif os.path.isfile(('../properties.json')):

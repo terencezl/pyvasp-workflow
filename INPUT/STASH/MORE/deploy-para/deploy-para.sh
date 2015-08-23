@@ -13,16 +13,15 @@ else
     task_spec=${task}.yaml
 fi
 
-other_args="$@"
-
-job=$task
 suffix=`date +%F-%T`
-task_spec_suffixed=${task_spec%.yaml}_${suffix}.yaml
+task_spec_suffixed=${task_spec##*/}
+task_spec_suffixed=${task_spec_suffixed%.yaml}_${suffix}.yaml
 python -c "
-import os
-os.chdir('INPUT')
-from run_module import fileload, filedump
+from os import chdir
+chdir('INPUT')
+from run_module import fileload, filedump, get_run_dir
+chdir('..')
 run_spec = fileload('${task_spec}')
-filedump(run_spec, '../${task_spec_suffixed}')
+filedump(run_spec, '${task_spec_suffixed}')
 "
-python INPUT/${task}.py $task_spec_suffixed $other_args
+python INPUT/${task}.py --remove_file $task_spec_suffixed --remove_file

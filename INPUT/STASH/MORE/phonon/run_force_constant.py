@@ -9,18 +9,15 @@ import pymatgen as mg
 
 
 if __name__ == '__main__':
-    filename = sys.argv[1]
-    run_spec = fileload(filename)
-    os.remove(filename)
-    phonopy_dim = ' '.join(map(str, run_spec['phonopy']['dim']))
-    phonopy_mp = ' '.join(map(str, run_spec['phonopy']['mp']))
-    phonopy_tmax = str(run_spec['phonopy']['tmax'])
-    phonopy_tstep = str(run_spec['phonopy']['tstep'])
+    run_specs, filename = get_run_specs_and_filename()
+    chdir(get_run_dir(run_specs))
+    filedump(run_specs, filename)
 
-    enter_main_dir(run_spec)
-    filedump(run_spec, filename)
-
-    incar = read_incar(run_spec)
+    phonopy_dim = ' '.join(map(str, run_specs['phonopy']['dim']))
+    phonopy_mp = ' '.join(map(str, run_specs['phonopy']['mp']))
+    phonopy_tmax = str(run_specs['phonopy']['tmax'])
+    phonopy_tstep = str(run_specs['phonopy']['tstep'])
+    incar = read_incar(run_specs)
     if os.path.isfile('../properties.json'):
         properties = fileload('../properties.json')
         if 'ISPIN' not in incar:
@@ -29,13 +26,13 @@ if __name__ == '__main__':
             else:
                 incar.update({'ISPIN': 1})
 
-    # higher priority for run_spec
-    if 'poscar' in run_spec:
-        structure = generate_structure(run_spec)
+    # higher priority for run_specs
+    if 'poscar' in run_specs:
+        structure = generate_structure(run_specs)
     elif os.path.isfile('../POSCAR'):
         structure = mg.Structure.from_file('../POSCAR')
 
-    kpoints = read_kpoints(run_spec, structure)
+    kpoints = read_kpoints(run_specs, structure)
 
     fitting_results = fileload('../run_volume/fitting_results.json')[-1]
     volume = np.round(np.array(fitting_results['volume']), 2)
@@ -54,7 +51,7 @@ if __name__ == '__main__':
         os.remove('disp.yaml')
         for f in glob.glob('POSCAR-*'):
             os.remove(f)
-        write_potcar(run_spec)
+        write_potcar(run_specs)
         run_vasp()
         call('phonopy --fc vasprun.xml > /dev/null 2>&1', shell=True)
         call('phonopy --readfc -c POSCAR_orig --mp="' + phonopy_mp + '" -tsp --dim="' + phonopy_dim + '" --tmax=' + phonopy_tmax + ' --tstep=' + phonopy_tstep + ' > /dev/null 2>&1', shell=True)

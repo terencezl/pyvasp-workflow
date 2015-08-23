@@ -1,28 +1,32 @@
-import os
-import sys
-import numpy as np
-import shutil
 from run_module import *
-import pymatgen as mg
 
 
 if __name__ == '__main__':
+    """
+
+    The simplest case of a VASP run.
+
+    Load the yaml file and copy it to the directory where the run is about to
+    take place. Create a new file 'stdout' to capture the screen output. Read
+    some VASP file objects from the yaml file and write them to disk, and
+    finally run VASP.
+
+    """
+
     # pre-config
-    filename = sys.argv[1]
-    run_spec = fileload(filename)
-    os.remove(filename)
-    enter_main_dir(run_spec)
-    filedump(run_spec, filename)
+    run_specs, filename = get_run_specs_and_filename()
+    chdir(get_run_dir(run_specs))
+    filedump(run_specs, filename)
     init_stdout()
 
     # read settings
-    incar = read_incar(run_spec)
-    structure = generate_structure(run_spec)
-    kpoints = read_kpoints(run_spec, structure)
+    incar = read_incar(run_specs)
+    structure = generate_structure(run_specs)
+    kpoints = read_kpoints(run_specs, structure)
 
     # write input files and run vasp
     incar.write_file('INCAR')
     kpoints.write_file('KPOINTS')
     structure.to(filename='POSCAR')
-    write_potcar(run_spec)
+    write_potcar(run_specs)
     run_vasp()

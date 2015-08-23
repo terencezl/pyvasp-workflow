@@ -1,5 +1,6 @@
 import os
 import sys
+import argparse
 import shutil
 from subprocess import call
 import re
@@ -21,7 +22,7 @@ VASP_TEMPLATES_DIR = os.getenv('VASP_TEMPLATES_DIR', os.path.join(os.getcwd(), '
 def fileload(filename):
     """
 
-    Loads a json or yaml file, determined by the extension.
+    Load a json or yaml file, determined by the extension.
 
     """
 
@@ -36,7 +37,7 @@ def fileload(filename):
 def filedump(dict_to_file, filename):
     """
 
-    Dumps a json or yaml file, determined by the extension. Indentation of json
+    Dump a json or yaml file, determined by the extension. Indentation of json
     and flow style of yaml is set.
 
     """
@@ -51,7 +52,7 @@ def filedump(dict_to_file, filename):
 def chdir(dirname):
     """
 
-    Enters a path. If it does not exist, create one recursively and enter.
+    Enter a path. If it does not exist, create one recursively and enter.
 
     """
 
@@ -59,10 +60,68 @@ def chdir(dirname):
     os.chdir(dirname)
 
 
+def get_run_specs_and_filename():
+    """
+
+    Parse the sys.argv list, return the run_specs object from the yaml file, and
+    its filename.
+
+    If the --remove_file option is turned on, remove the yaml file. This is
+    useful when you use a shell submission trigger file and has a temporary copy
+    of a yaml file that should be removed once it's used. By default the file is
+    not removed.
+
+    """
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('filepath', help='path of the yaml file')
+    parser.add_argument('--remove_file', action='store_true', help="if remove the yaml file")
+    args = parser.parse_args()
+
+    run_specs = fileload(args.filepath)
+    filename = os.path.basename(args.filepath)
+    if args.remove_file:
+        os.remove(filename)
+
+    return run_specs, filename
+
+
+def get_run_dir(run_specs):
+    """
+
+    Get the directory where the routine takes place.
+
+    If 'run_dir' is in the yaml file, use that. Otherwise, use a naming scheme
+    that combines 'structure', 'elem_types' and 'run_subdir'. If none of them
+    exists, name it 'vasp_test'.
+
+    """
+
+    if 'run_dir' in run_specs:
+        dirname = run_specs['run_dir']
+    elif 'structure' in run_specs and 'elem_types' in run_specs and 'run_subdir' in run_specs:
+        dirname = run_specs['structure'] + '-' + '+'.join(run_specs['elem_types'])
+        dirname = os.path.join(dirname, run_specs['run_subdir'])
+    else:
+        dirname = 'vasp_test'
+
+    return dirname
+
+
+def enter_main_dir(run_specs):
+    """
+
+    Enter the run directory.
+
+    """
+
+    chdir(get_run_dir(run_specs))
+
+
 def init_stdout():
     """
 
-    Creates a new stdout file and record working directory.
+    Create a new stdout file and record working directory.
 
     """
 
@@ -70,28 +129,10 @@ def init_stdout():
     call('echo "Working directory: $PWD" | tee stdout', shell=True)
 
 
-def enter_main_dir(run_spec):
-    """
-
-    Enters the run directory.
-
-    If 'run_dir' is in the yaml file, use that. Otherwise, use a naming
-    scheme that combines 'structure', 'elem_types' and 'run_subdir'.
-
-    """
-
-    if 'run_dir' in run_spec:
-        dirname = run_spec['run_dir']
-    elif 'structure' in run_spec and 'run_subdir' in run_spec:
-        dirname = run_spec['structure'] + '-' + '+'.join(run_spec['elem_types'])
-        dirname = os.path.join(dirname, run_spec['run_subdir'])
-    chdir(dirname)
-
-
 def run_vasp():
     """
 
-    Runs VASP, times it, prints out to screen, and appends it to a file named
+    Run VASP, time it, print out to screen, and append it to a file named
     'stdout'. You need to set the VASP_EXEC environmental variable, or edit
     the head of this file to be able to use it.
 
@@ -106,24 +147,24 @@ def run_vasp():
     call('echo -e ' + hbreak + ' | tee -a stdout', shell=True)
 
 
-def read_incar(run_spec):
+def read_incar(run_specs):
     """
 
-    Reads contents of 'incar' from the yaml file. If 'incar' does not exist,
+    Read contents of 'incar' from the yaml file. If 'incar' does not exist,
     return an empty Incar object, still functional.
 
     """
 
     incar = mg.io.vasp.Incar()
-    if 'incar' in run_spec and run_spec['incar']:
-        incar.update(run_spec['incar'])
+    if 'incar' in run_specs and run_specs['incar']:
+        incar.update(run_specs['incar'])
     return incar
 
 
-def read_kpoints(run_spec, structure=None):
+def read_kpoints(run_specs, structure=None):
     """
 
-    Reads contents of 'kpoints' from the yaml file. If 'kpoints' does not
+    Read contents of 'kpoints' from the yaml file. If 'kpoints' does not
     exist, return an automatic (A) mesh with 5 subdivisions along each
     reciprocal vector.
 
@@ -140,8 +181,8 @@ def read_kpoints(run_spec, structure=None):
     """
 
     kpoints = mg.io.vasp.Kpoints.automatic(5)
-    if 'kpoints' in run_spec and run_spec['kpoints']:
-        kpoints_spec = run_spec['kpoints']
+    if 'kpoints' in run_specs and run_specs['kpoints']:
+        kpoints_spec = run_specs['kpoints']
         if 'density'in kpoints_spec:
             if 'force_gamma'in kpoints_spec:
                 force_gamma = kpoints_spec['force_gamma']
@@ -157,10 +198,10 @@ def read_kpoints(run_spec, structure=None):
     return kpoints
 
 
-def generate_structure(run_spec):
+def generate_structure(run_specs):
     """
 
-    Generates pymatgen.Structure. There are many ways to get a structure. They
+    Generate pymatgen.Structure. There are many ways to get a structure. They
     are all specified under 'poscar' in the yaml file.
 
     If 'template' is present in 'poscar', you can either set the
@@ -209,8 +250,8 @@ def generate_structure(run_spec):
 
     is_template = None
     is_material_id = None
-    poscar_spec = run_spec['poscar']
-    elem_types_struct = [re.sub(r'_.*', '', i) for i in run_spec['elem_types']]
+    poscar_spec = run_specs['poscar']
+    elem_types_struct = [re.sub(r'_.*', '', i) for i in run_specs['elem_types']]
     if 'template' in poscar_spec:
         is_template = True
         poscar = mg.io.vasp.Poscar.from_file(os.path.join(VASP_TEMPLATES_DIR, poscar_spec['template']))
@@ -236,12 +277,12 @@ def generate_structure(run_spec):
 
     if is_template or is_material_id:
         if 'use_structure_elem_types' in poscar_spec and poscar_spec['use_structure_elem_types']:
-            run_spec['elem_types'] = list(structure.symbol_set)
+            run_specs['elem_types'] = list(structure.symbol_set)
         else:
             for i, item in enumerate(structure.symbol_set):
                 structure.replace_species({item: elem_types_struct[i]})
         if 'volume' in poscar_spec:
-            structure.scale_lattice(run_spec['poscar']['volume'])
+            structure.scale_lattice(run_specs['poscar']['volume'])
         return structure
 
     cryst_sys = poscar_spec['cryst_sys']
@@ -272,18 +313,18 @@ def generate_structure(run_spec):
     return structure
 
 
-def write_potcar(run_spec):
+def write_potcar(run_specs):
     """
 
-    Writes POTCAR. Gets the POTCAR types from 'elem_types' in the yaml file.
+    Write POTCAR. It gets the POTCAR types from 'elem_types' in the yaml file.
     You need to set the VASP_POTENTIALS_DIR environmental variable, or edit
     the head of this file to be able to use it.
 
     """
 
-    potential_base = os.path.join(VASP_POTENTIALS_DIR, run_spec['pot_type'])
+    potential_base = os.path.join(VASP_POTENTIALS_DIR, run_specs['pot_type'])
     with open('POTCAR', 'wb') as outfile:
-        for filename in [os.path.join(potential_base, e, 'POTCAR') for e in run_spec['elem_types']]:
+        for filename in [os.path.join(potential_base, e, 'POTCAR') for e in run_specs['elem_types']]:
             with open(filename, 'rb') as infile:
                 shutil.copyfileobj(infile, outfile)
 
@@ -291,8 +332,8 @@ def write_potcar(run_spec):
 def detect_is_mag(mag, tol=1e-3):
     """
 
-    Detects if any of a list/numpy array, or a float/int value of magnetic
-    moments is larger than some criterion (tol optional argument). Returns the
+    Detect if any of a list/numpy array, or a float/int value of magnetic
+    moments is larger than some criterion (tol optional argument). Return the
     boolean.
 
     """

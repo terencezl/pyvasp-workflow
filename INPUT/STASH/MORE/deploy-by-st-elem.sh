@@ -13,25 +13,26 @@ else
     task_spec=${task}.yaml
 fi
 
-other_args="$@"
-
 for st in NiAs WC; do
     for elem in Mn_pv Fe Co; do
-        job=${st}-${elem}
-        suffix=${job}_`date +%F-%T`
-        task_spec_suffixed=${task_spec%.yaml}-${suffix}.yaml
-        python -c "
-import os
-os.chdir('INPUT')
-from run_module import fileload, filedump
+        suffix=`date +%F-%T`_${st}-${elem}
+        task_spec_suffixed=${task_spec##*/}
+        task_spec_suffixed=${task_spec_suffixed%.yaml}_${suffix}.yaml
+        job=`python -c "
+from os import chdir
+chdir('INPUT')
+from run_module import fileload, filedump, get_run_dir
+chdir('..')
 run_spec = fileload('${task_spec}')
+# suffix the run directory and changing parameter
 run_spec['structure'] = '$st'
 run_spec['elem_types'] = ['$elem', 'N']
 run_spec['poscar']['template'] = 'POSCAR-${st}'
-filedump(run_spec, '../${task_spec_suffixed}')
-        "
-        cp INPUT/deploy.job $job
-        sed -i "/python/c python INPUT/${task}.py $task_spec_suffixed $other_args" $job
+filedump(run_spec, '${task_spec_suffixed}')
+print(get_run_dir(run_spec).replace('/', '-'))
+        "`
+        cp INPUT/deploy.job "$job"
+        sed -i "/python/c python INPUT/${task}.py $task_spec_suffixed --remove_file" "$job"
         M $job
         rm $job
     done

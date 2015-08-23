@@ -9,15 +9,13 @@ import pymatgen as mg
 
 
 if __name__ == '__main__':
-    filename = sys.argv[1]
-    run_spec = fileload(filename)
-    os.remove(filename)
-    phonopy_dim = ' '.join(map(str, run_spec['phonopy']['dim']))
-    phonopy_mp = ' '.join(map(str, run_spec['phonopy']['mp']))
-    phonopy_tmax = str(run_spec['phonopy']['tmax'])
-    phonopy_tstep = str(run_spec['phonopy']['tstep'])
+    run_specs, filename = get_run_specs_and_filename()
+    chdir(get_run_dir(run_specs))
 
-    enter_main_dir(run_spec)
+    phonopy_dim = ' '.join(map(str, run_specs['phonopy']['dim']))
+    phonopy_mp = ' '.join(map(str, run_specs['phonopy']['mp']))
+    phonopy_tmax = str(run_specs['phonopy']['tmax'])
+    phonopy_tstep = str(run_specs['phonopy']['tstep'])
     fitting_results = fileload('../run_volume/fitting_results.json')[-1]
     volume = np.round(np.array(fitting_results['volume']), 2)
 

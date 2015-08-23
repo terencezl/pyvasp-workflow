@@ -7,13 +7,11 @@ import pymatgen as mg
 import pymatgen.electronic_structure.plotter
 
 if __name__ == '__main__':
-    filename = sys.argv[1]
-    run_spec = fileload(filename)
-    os.remove(filename)
-    enter_main_dir(run_spec)
-    filedump(run_spec, filename)
+    run_specs, filename = get_run_specs_and_filename()
+    chdir(get_run_dir(run_specs))
+    filedump(run_specs, filename)
     init_stdout()
-    incar = read_incar(run_spec)
+    incar = read_incar(run_specs)
     if os.path.isfile('../properties.json'):
         properties = fileload('../properties.json')
         if 'ISPIN' not in incar:
@@ -22,27 +20,27 @@ if __name__ == '__main__':
             else:
                 incar.update({'ISPIN': 1})
 
-    # higher priority for run_spec
-    if 'poscar' in run_spec:
-        structure = generate_structure(run_spec)
+    # higher priority for run_specs
+    if 'poscar' in run_specs:
+        structure = generate_structure(run_specs)
     elif os.path.isfile('../POSCAR'):
         structure = mg.Structure.from_file('../POSCAR')
 
-    kpoints = read_kpoints(run_spec, structure)
+    kpoints = read_kpoints(run_specs, structure)
 
     # first DFT run
     incar.write_file('INCAR')
     kpoints.write_file('KPOINTS')
     structure.to(filename='POSCAR')
-    write_potcar(run_spec)
+    write_potcar(run_specs)
     run_vasp()
 
     # second hybrid run
     structure = mg.Structure.from_file('CONTCAR')
-    incar.update(run_spec['bs_hybrid']['incar'])
+    incar.update(run_specs['bs_hybrid']['incar'])
     # obtain the automatically generated kpoints list
     hskp = mg.symmetry.bandstructure.HighSymmKpath(structure)
-    kpts_bs = hskp.get_kpoints(run_spec['bs_hybrid']['kpoints_division'], return_cartesian=False)
+    kpts_bs = hskp.get_kpoints(run_specs['bs_hybrid']['kpoints_division'], return_cartesian=False)
     kpoints = mg.io.vasp.Kpoints.from_file('IBZKPT')
     kpoints.kpts.extend([i.tolist() for i in kpts_bs[0]])
     kpoints.kpts_weights.extend([0 for i in kpts_bs[0]])

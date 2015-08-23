@@ -13,29 +13,24 @@ else
     task_spec=${task}.yaml
 fi
 
-other_args="$@"
-
 for i in 288.5 266 304; do
-    suffix=${i}_`date +%F-%T`
-    task_spec_suffixed=${task_spec%.yaml}-${suffix}.yaml
+    suffix=`date +%F-%T`_${i}
+    task_spec_suffixed=${task_spec##*/}
+    task_spec_suffixed=${task_spec_suffixed%.yaml}_${suffix}.yaml
     job=`python -c "
-import os
-os.chdir('INPUT')
-from run_module import fileload, filedump
+from os import chdir
+chdir('INPUT')
+from run_module import fileload, filedump, get_run_dir
+chdir('..')
 run_spec = fileload('${task_spec}')
+# suffix the run directory and changing parameter
+run_spec['run_dir'] += '-$i'
 run_spec['poscar']['volume'] = $i
-filedump(run_spec, '../${task_spec_suffixed}')
-if 'run_dir' in run_spec:
-    run_spec['run_dir'] += '-$i'
-    print(run_spec['run_dir'].replace('/', '-'))
-elif 'run_subdir' in run_spec:
-    run_spec['run_subdir'] += '-$i'
-    print(run_spec['run_subdir'].replace('/', '-'))
-else:
-    print('vasp')
-"`
+filedump(run_spec, '${task_spec_suffixed}')
+print(get_run_dir(run_spec).replace('/', '-'))
+    "`
     cp INPUT/deploy.job "$job"
-    sed -i "/python/c python INPUT/${task}.py $task_spec_suffixed $other_args" "$job"
+    sed -i "/python/c python INPUT/${task}.py $task_spec_suffixed --remove_file" "$job"
     M "$job"
     rm "$job"
 done

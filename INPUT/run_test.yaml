@@ -18,7 +18,7 @@ incar:
   LCHARG: False
   LWAVE: False
 kpoints:
-  mode: M
+  # mode: M
   # divisions: [6, 6, 6]
   density: 1000
   # force_gamma: True

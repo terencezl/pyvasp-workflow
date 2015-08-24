@@ -174,9 +174,8 @@ def read_kpoints(run_specs, structure=None):
     density being KPPRA. In this case you need to provide the structure as an
     argument. 'force_gamma' can be specified to True.
 
-    Otherwise, if 'mode' exists in 'kpoints', and it starts with 'M' or 'G',
-    MP mesh or Gamma-centered mesh is returned with specified 'divisions' as a
-    list.
+    Otherwise, if 'divisions', specified as a list, exists in 'kpoints', MP mesh or Gamma-centered
+    mesh is returned, according to 'mode' that starts with 'M' or 'G'.
 
     """
 
@@ -190,7 +189,7 @@ def read_kpoints(run_specs, structure=None):
                 force_gamma = False
             kpoints = mg.io.vasp.Kpoints.automatic_density(structure, kpoints_spec['density'],
                 force_gamma=force_gamma)
-        elif 'mode' in kpoints_spec:
+        elif 'divisions' in kpoints_spec:
             if kpoints_spec['mode'].upper().startswith('M'):
                 kpoints = mg.io.vasp.Kpoints.monkhorst_automatic(kpoints_spec['divisions'])
             elif kpoints_spec['mode'].upper().startswith('G'):
@@ -198,10 +197,10 @@ def read_kpoints(run_specs, structure=None):
     return kpoints
 
 
-def generate_structure(run_specs):
+def get_structure(run_specs):
     """
 
-    Generate pymatgen.Structure. There are many ways to get a structure. They
+    Get pymatgen.Structure. There are many ways to get a structure. They
     are all specified under 'poscar' in the specs file.
 
     If 'template' is present in 'poscar', you can either set the
@@ -311,6 +310,10 @@ def generate_structure(run_specs):
     structure = mg.Structure.from_spacegroup(poscar_spec['spacegroup'], lattice,
             elem_types_struct_multi, poscar_spec['atoms_direct_coords'])
     return structure
+
+
+def generate_structure(run_specs):
+    return get_structure(run_specs)
 
 
 def write_potcar(run_specs):

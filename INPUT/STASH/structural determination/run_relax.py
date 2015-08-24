@@ -44,7 +44,7 @@ if __name__ == '__main__':
     incar = read_incar(run_specs)
 
     if 'poscar' in run_specs:
-        structure = generate_structure(run_specs)
+        structure = get_structure(run_specs)
     elif os.path.isfile('CONTCAR'):
         structure = mg.Structure.from_file('CONTCAR')
         stack_oszicar()

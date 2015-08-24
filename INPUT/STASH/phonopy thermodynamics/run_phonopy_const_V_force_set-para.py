@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
     # higher priority for run_specs
     if 'poscar' in run_specs:
-        structure = generate_structure(run_specs)
+        structure = get_structure(run_specs)
     elif os.path.isfile('../POSCAR'):
         structure = mg.Structure.from_file('../POSCAR')
 

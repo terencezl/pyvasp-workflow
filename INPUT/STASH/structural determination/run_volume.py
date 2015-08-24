@@ -75,7 +75,7 @@ if __name__ == '__main__':
     If 'volume' does not exist, a ../properties.json file is attempted and if it
     exists, it should contain a 'V0' field, the volume range is constructed with
     5 points between 0.9 * V0 and 1.1 * V0. If this file doesn't exsit, the
-    volume of the structure returned by generate_structure() is used to do the
+    volume of the structure returned by get_structure() is used to do the
     same construction.
 
     """
@@ -104,7 +104,7 @@ if __name__ == '__main__':
 
     # higher priority for run_specs
     if 'poscar' in run_specs:
-        structure = generate_structure(run_specs)
+        structure = get_structure(run_specs)
     elif os.path.isfile('../POSCAR'):
         structure = mg.Structure.from_file('../POSCAR')
 

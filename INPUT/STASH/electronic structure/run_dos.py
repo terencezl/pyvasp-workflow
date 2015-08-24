@@ -1,12 +1,25 @@
 import os
-import sys
-import shutil
-import numpy as np
 from run_module import *
 import pymatgen as mg
 
 
 if __name__ == '__main__':
+    """
+
+    Obtain the density of states by the non-self-consistent method.
+
+    You should set a 'bs' tag in the specs file, like
+
+        dos:
+          incar:
+            ICHARG: 11
+            NEDOS: 3001
+            LORBIT: 10
+          kpoints:
+            divisions: [10, 10, 10]
+
+    """
+
     run_specs, filename = get_run_specs_and_filename()
     chdir(get_run_dir(run_specs))
     filedump(run_specs, filename)

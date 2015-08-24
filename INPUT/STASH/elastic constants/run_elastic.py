@@ -1,5 +1,4 @@
 import os
-import sys
 import shutil
 import numpy as np
 from run_module import *
@@ -9,6 +8,22 @@ import pydass_vasp
 
 
 if __name__ == '__main__':
+    """
+
+    Run the full independent strain sets with changing delta values, fit the
+    energy values from each strain set to a polynomial, extract the parameters
+    and plot figures, and then linearly solve for the elastic constants.
+
+    The strain sets used to solve the elastic constants are detailed in
+    run_module_elastic.py.
+
+    You should set a 'elastic' tag in the specs file, like
+
+    elastic:
+      cryst_sys: cubic
+
+    """
+
     run_specs, filename = get_run_specs_and_filename()
     chdir(get_run_dir(run_specs))
     filedump(run_specs, filename)
@@ -61,7 +76,6 @@ if __name__ == '__main__':
     for test_type, strain, delta in \
                 zip(*get_test_type_strain_delta_list(cryst_sys)):
         chdir(test_type)
-        init_stdout()
         energy = np.zeros(len(delta))
         energy[0] = energy_nostrain
         mag = np.zeros(len(delta))
@@ -69,6 +83,8 @@ if __name__ == '__main__':
             mag[0] = mag_nostrain
 
         for ind, value in enumerate(delta[1:]):
+            chdir(str(value))
+            init_stdout()
             incar.write_file('INCAR')
             kpoints.write_file('KPOINTS')
             lattice_modified = mg.Lattice(
@@ -82,6 +98,7 @@ if __name__ == '__main__':
             energy[ind+1] = oszicar.final_energy
             if is_mag:
                 mag[ind+1] = oszicar.ionic_steps[-1]['mag']
+            os.chdir('..')
 
         if 'LWAVE' not in incar:
             os.remove('WAVECAR')

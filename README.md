@@ -26,7 +26,7 @@ In the directory root, you'll see a directory called `INPUT/`, which contains a 
 3. a job script, according to your supercomputer's setup. Here it's named `deploy.job`
 4. a deploy trigger file, typically ending with `.sh`, which submits the job script
 
-To avoid cluttering of irrelevant files, under `INPUT/` there is only one set of `.py` and `.yaml` files. You'll need more as you define you own routines. For some examples, go to `STASH/`. For more examples, go to `STASH/MORE`.
+To avoid cluttering of irrelevant files, under `INPUT/` there is only one set of `.py` and `.yaml` files. You'll need more as you define you own routines. For a bunch of examples, go to `STASH/`.
 
 How to Run
 ----------
@@ -85,12 +85,27 @@ I assume your supercomputer is using a queueing system to manage multi-users, wh
    INPUT/deploy.sh run_test INPUT/run_test_2.yaml
    ```
 
-   to select your alternative specs file.
-
-Now, if your supercomputer doesn't have a queueing system, or you are already in an interactive session, skip 4 and 5, just
+**Now, if your supercomputer doesn't have a queueing system, or you are already in an interactive session, skip 4 and 5, just**
 
 ```bash
 python INPUT/run_test.py
 # or for INPUT/run_test_2.yaml
 python INPUT/run_test.py INPUT/run_tset_2.yaml
 ```
+
+Priority Rules
+--------------
+
+There are a few priority rules implemented throughout most routines regarding what parameter to take. This gives flexibility to the scripts by just not setting some tags in th specs file. However, whatever you provide in the specs will be given precedence.
+
+* For INCAR, if 'ISPIN' is not provided in the specs file under 'incar', a ../properties.json file is attempted and if it exists, it should contain a 'mag' field with the cell's magnetic moment. ISPIN value is set to 2 if mag is larger than 0.001.
+
+* For POSCAR, if 'poscar' is not provided in the specs file, a ../POSCAR is attempted.
+
+Dependencies
+------------
+
+* NumPy
+* SciPy
+* matplotlib
+* pydass_vasp (https://github.com/terencezl/pydass_vasp) (needed by some scripts)

@@ -1,4 +1,11 @@
 #!/bin/bash
+
+# This is designed for the run_xxx-para.py routine scripts, which has a python
+# level of parallel submission. But for a single call, this file is optional,
+# because you can always do
+#
+#   INPUT/run_xxx-para.py INPUT/run_xxx.yaml
+
 task="$1"
 if [[ -z $task ]]; then
     echo "You must provide task name at least!"
@@ -25,7 +32,4 @@ run_specs = fileload('${task_specs}')
 filedump(run_specs, '${task_specs_suffixed}')
 print(get_run_dir(run_specs).replace('/', '-'))
 "`
-cp INPUT/deploy.job "$job"
-sed -i "/python/c python INPUT/${task}.py $task_specs_suffixed --remove_file" "$job"
-M "$job"
-rm "$job"
+python INPUT/${task}.py $task_specs_suffixed --remove_file

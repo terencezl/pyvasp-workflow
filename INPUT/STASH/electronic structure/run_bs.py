@@ -1,12 +1,26 @@
 import os
-import sys
-import shutil
-import numpy as np
 from run_module import *
 import pymatgen as mg
-
+import pymatgen.electronic_structure.plotter
 
 if __name__ == '__main__':
+    """
+
+    Obtain the band structure by the non-self-consistent method with
+    automatically generated high symmetry line kpoints.
+
+    You should set a 'bs' tag in the specs file, like
+
+        bs:
+          incar:
+            ICHARG: 11
+            NEDOS: 3001
+            LORBIT: 10
+            ISMEAR: 0
+          kpoints_division: 20
+
+    """
+
     run_specs, filename = get_run_specs_and_filename()
     chdir(get_run_dir(run_specs))
     filedump(run_specs, filename)

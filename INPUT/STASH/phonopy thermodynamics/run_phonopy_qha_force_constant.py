@@ -1,6 +1,4 @@
 import os
-import sys
-import shutil
 from subprocess import call
 import glob
 import numpy as np
@@ -9,6 +7,22 @@ import pymatgen as mg
 
 
 if __name__ == '__main__':
+    """
+
+    Run the phonopy qha force constant calculation for a volume range obtained
+    by a VASP routine run_volume.py. It'll get the volume, energy and structures
+    at different volumes from ../run_volume/fitting_results.json.
+
+    You should set a 'phonopy' tag in the specs file like
+
+        phonopy:
+          dim: [2, 2, 2]
+          mp: [31, 31, 31]
+          tmax: 1400
+          tstep: 5
+
+    """
+
     run_specs, filename = get_run_specs_and_filename()
     chdir(get_run_dir(run_specs))
     filedump(run_specs, filename)

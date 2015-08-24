@@ -1,12 +1,28 @@
 import os
-import sys
-import shutil
-import numpy as np
 from run_module import *
 import pymatgen as mg
 import pymatgen.electronic_structure.plotter
 
 if __name__ == '__main__':
+    """
+
+    Obtain the hybrid functional band structure by the self-consistent method
+    with automatically generated empty weighted high symmetry line kpoints.
+
+    You should set a 'bs_hybrid' tag in the specs file, like
+
+        bs_hybrid:
+          incar:
+            LHFCALC: True
+            HFSCREEN: 0.2
+            PRECFOCK: Fast
+            ALGO: Damped
+            NEDOS: 3001
+            LORBIT: 10
+          kpoints_division: 10
+
+    """
+
     run_specs, filename = get_run_specs_and_filename()
     chdir(get_run_dir(run_specs))
     filedump(run_specs, filename)

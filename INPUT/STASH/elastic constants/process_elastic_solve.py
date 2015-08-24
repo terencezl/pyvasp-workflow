@@ -1,13 +1,26 @@
 import os
-import sys
-import shutil
 import numpy as np
 from run_module import *
 from run_module_elastic import *
 import pymatgen as mg
-import pydass_vasp
 
 if __name__ == '__main__':
+    """
+
+    Linearly solve for the elastic constants.
+
+    Not a VASP run script that requires a job submission. You can directly use
+    it as
+
+        INPUT/process_elastic_solve.py INPUT/run_elastic_single.yaml
+
+    to read a specs file at INPUT/run_elastic_single.yaml, which is the file you
+    would use to actually run the routine script run_elastic_single.py and the
+    process script process_elastic_single.py for all the independent strain
+    sets before this.
+
+    """
+
     run_specs, filename = get_run_specs_and_filename()
     chdir(get_run_dir(run_specs))
 

@@ -22,7 +22,7 @@ VASP_TEMPLATES_DIR = os.getenv('VASP_TEMPLATES_DIR', os.path.join(os.getcwd(), '
 def fileload(filename):
     """
 
-    Load a json or yaml file, determined by the extension.
+    Load a json or specs file, determined by the extension.
 
     """
 
@@ -37,7 +37,7 @@ def fileload(filename):
 def filedump(dict_to_file, filename):
     """
 
-    Dump a json or yaml file, determined by the extension. Indentation of json
+    Dump a json or specs file, determined by the extension. Indentation of json
     and flow style of yaml is set.
 
     """
@@ -63,19 +63,19 @@ def chdir(dirname):
 def get_run_specs_and_filename():
     """
 
-    Parse the sys.argv list, return the run_specs object from the yaml file, and
+    Parse the sys.argv list, return the run_specs object from the specs file, and
     its filename.
 
-    If the --remove_file option is turned on, remove the yaml file. This is
+    If the --remove_file option is turned on, remove the specs file. This is
     useful when you use a shell submission trigger file and has a temporary copy
-    of a yaml file that should be removed once it's used. By default the file is
+    of a specs file that should be removed once it's used. By default the file is
     not removed.
 
     """
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('filepath', help='path of the yaml file')
-    parser.add_argument('--remove_file', action='store_true', help="if remove the yaml file")
+    parser.add_argument('filepath', help='path of the specs file')
+    parser.add_argument('--remove_file', action='store_true', help="if remove the specs file")
     args = parser.parse_args()
 
     run_specs = fileload(args.filepath)
@@ -91,7 +91,7 @@ def get_run_dir(run_specs):
 
     Get the directory where the routine takes place.
 
-    If 'run_dir' is in the yaml file, use that. Otherwise, use a naming scheme
+    If 'run_dir' is in the specs file, use that. Otherwise, use a naming scheme
     that combines 'structure', 'elem_types' and 'run_subdir'. If none of them
     exists, name it 'vasp_test'.
 
@@ -150,7 +150,7 @@ def run_vasp():
 def read_incar(run_specs):
     """
 
-    Read contents of 'incar' from the yaml file. If 'incar' does not exist,
+    Read contents of 'incar' from the specs file. If 'incar' does not exist,
     return an empty Incar object, still functional.
 
     """
@@ -164,7 +164,7 @@ def read_incar(run_specs):
 def read_kpoints(run_specs, structure=None):
     """
 
-    Read contents of 'kpoints' from the yaml file. If 'kpoints' does not
+    Read contents of 'kpoints' from the specs file. If 'kpoints' does not
     exist, return an automatic (A) mesh with 5 subdivisions along each
     reciprocal vector.
 
@@ -202,7 +202,7 @@ def generate_structure(run_specs):
     """
 
     Generate pymatgen.Structure. There are many ways to get a structure. They
-    are all specified under 'poscar' in the yaml file.
+    are all specified under 'poscar' in the specs file.
 
     If 'template' is present in 'poscar', you can either set the
     VASP_TEMPLATES_DIR environmental variable, or just leave it to the default
@@ -218,7 +218,7 @@ def generate_structure(run_specs):
     exactly.
 
     For the above two ways, by default, the element types in the structure will
-    be replaced according to 'elem_types' in the yaml file, but you have to make
+    be replaced according to 'elem_types' in the specs file, but you have to make
     sure the element type sequences of the structure and 'elem_types' are right.
     If on the other hand, you want to skip specifying 'elem_types' and simply
     use the element types in the structure, set 'use_structure_elem_types' to
@@ -316,7 +316,7 @@ def generate_structure(run_specs):
 def write_potcar(run_specs):
     """
 
-    Write POTCAR. It gets the POTCAR types from 'elem_types' in the yaml file.
+    Write POTCAR. It gets the POTCAR types from 'elem_types' in the specs file.
     You need to set the VASP_POTENTIALS_DIR environmental variable, or edit
     the head of this file to be able to use it.
 

@@ -1,6 +1,4 @@
 import os
-import sys
-import shutil
 import numpy as np
 from run_module import *
 import matplotlib.pyplot as plt
@@ -8,6 +6,21 @@ import pymatgen as mg
 
 
 if __name__ == '__main__':
+    """
+
+    Run convergence test with changing kpoints subdivision values, and plot
+    figures.
+
+    You should set a 'kpoints_test' tag in the specs file, like
+
+        kpoints_test:
+          mode: G
+          kpoints_change: [[7, 7, 7], [9, 9, 9], [11, 11, 11], [13, 13, 13]]
+
+    Obviously, 'kpoints' tag should be omitted.
+
+    """
+
     run_specs, filename = get_run_specs_and_filename()
     chdir(get_run_dir(run_specs))
     filedump(run_specs, filename)

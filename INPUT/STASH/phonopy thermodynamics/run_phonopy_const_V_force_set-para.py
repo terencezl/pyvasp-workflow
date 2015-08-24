@@ -1,14 +1,26 @@
 import os
-import sys
 import shutil
 from subprocess import call
 import glob
-import numpy as np
 from run_module import *
 import pymatgen as mg
 
 
 if __name__ == '__main__':
+    """
+
+    Run the phonopy force set calculation for a constant volume.
+
+    You should set a 'phonopy' tag in the specs file like
+
+        phonopy:
+          dim: [2, 2, 2]
+          mp: [31, 31, 31]
+          tmax: 1400
+          tstep: 5
+
+    """
+
     run_specs, filename = get_run_specs_and_filename()
     cwd = os.getcwd()
     chdir(get_run_dir(run_specs))

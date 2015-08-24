@@ -1,5 +1,5 @@
 import os
-import sys
+
 import shutil
 from subprocess import call
 import glob
@@ -11,17 +11,28 @@ import pymatgen as mg
 if __name__ == '__main__':
     """
 
-    Needs run_volume first. Specifically, needs
-    ../run_volume/fitting_results.json.
+    Run the phonopy qha force set calculation for a volume range obtained by a
+    VASP routine run_volume.py. It'll get the volume, energy and structures at
+    different volumes from ../run_volume/fitting_results.json.
+
+    You should set a 'phonopy' tag in the specs file like
+
+        phonopy:
+          dim: [2, 2, 2]
+          mp: [31, 31, 31]
+          tmax: 1400
+          tstep: 5
 
     """
 
     run_specs, filename = get_run_specs_and_filename()
-    cwd = os.getcwd()
     chdir(get_run_dir(run_specs))
     filedump(run_specs, filename)
 
     phonopy_dim = ' '.join(map(str, run_specs['phonopy']['dim']))
+    phonopy_mp = ' '.join(map(str, run_specs['phonopy']['mp']))
+    phonopy_tmax = str(run_specs['phonopy']['tmax'])
+    phonopy_tstep = str(run_specs['phonopy']['tstep'])
     incar = read_incar(run_specs)
     if os.path.isfile('../properties.json'):
         properties = fileload('../properties.json')
@@ -59,10 +70,17 @@ if __name__ == '__main__':
             incar.write_file('INCAR')
             kpoints.write_file('KPOINTS')
             write_potcar(run_specs)
-            job = str(V) + '-' + disp_d
-            shutil.copy(cwd + '/INPUT/deploy.job', job)
-            call('sed -i "/python/c time ' + VASP_EXEC + ' 2>&1 | tee -a stdout" ' + job, shell=True)
-            call('M ' + job, shell=True)
-            os.remove(job)
+            run_vasp()
             os.chdir('..')
+
+        disp_vasprun_xml = ' '.join([i + '/vasprun.xml' for i in disp_dirs])
+        call('phonopy -f ' + disp_vasprun_xml + ' > /dev/null 2>&1', shell=True)
+        call('phonopy --mp="' + phonopy_mp + '" -tsp --dim="' + phonopy_dim + '" --tmax=' + phonopy_tmax + ' --tstep=' + phonopy_tstep + ' > /dev/null 2>&1', shell=True)
         os.chdir('..')
+
+    # post processing
+    fitting_results = fileload('../run_volume/fitting_results.json')[-1]
+    e_v_dat = np.column_stack((fitting_results['volume'], fitting_results['energy']))
+    np.savetxt('../e-v.dat', e_v_dat, '%15.6f', header='volume energy')
+    thermal_properties = ' '.join([str(i) + '/thermal_properties.yaml' for i in volume])
+    call('phonopy-qha ../e-v.dat ' + thermal_properties + ' --tmax=' + phonopy_tmax + ' > /dev/null 2>&1', shell=True)

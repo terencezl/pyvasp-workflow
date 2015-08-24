@@ -1,5 +1,4 @@
 import os
-import sys
 import shutil
 import numpy as np
 from run_module import *
@@ -35,7 +34,7 @@ def volume_fitting(structure, is_mag, fitting_results):
     plt.tight_layout()
     plt.savefig('eos_fit.pdf')
     plt.close()
-    # fitting and dumpiing
+    # fitting and dumping
     fitting_result_raw = pydass_vasp.fitting.eos_fit(volume, energy, save_figs=True)
     fitting_results[-1]['params'] = fitting_result_raw['params']
     fitting_results[-1]['r_squared'] = fitting_result_raw['r_squared']
@@ -60,6 +59,27 @@ def volume_fitting(structure, is_mag, fitting_results):
 
 
 if __name__ == '__main__':
+    """
+
+    Obtain the equilibrium volume and bulk modulus by third order Burch-
+    Murnaghan EOS fit. If the "goodness" (see the actual code) is not reached,
+    reconstruct the volume range and rerun till the fit is "good".
+
+    Optionally, you can set a 'volume' tag in the specs file like
+
+        volume:
+          begin: 15
+          end:   25
+          sample_point_num: 5
+
+    If 'volume' does not exist, a ../properties.json file is attempted and if it
+    exists, it should contain a 'V0' field, the volume range is constructed with
+    5 points between 0.9 * V0 and 1.1 * V0. If this file doesn't exsit, the
+    volume of the structure returned by generate_structure() is used to do the
+    same construction.
+
+    """
+
     run_specs, filename = get_run_specs_and_filename()
     chdir(get_run_dir(run_specs))
     filedump(run_specs, filename)

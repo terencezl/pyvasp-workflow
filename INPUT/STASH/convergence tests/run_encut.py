@@ -1,6 +1,4 @@
 import os
-import sys
-import shutil
 import numpy as np
 from run_module import *
 import matplotlib.pyplot as plt
@@ -8,6 +6,23 @@ import pymatgen as mg
 
 
 if __name__ == '__main__':
+    """
+
+    Run convergence test with changing energy cut-off values, and plot figures.
+
+    You should set a 'encut_change' tag in the specs file, like
+
+        encut_change: [320, 330, 340, 350, 360, 370, 380, 390, 400]
+        or
+        encut_change:
+          begin: 300
+          end: 500
+          step: 10
+
+    Obviously, ENCUT should be omitted under the 'incar' tag.
+
+    """
+
     run_specs, filename = get_run_specs_and_filename()
     chdir(get_run_dir(run_specs))
     filedump(run_specs, filename)

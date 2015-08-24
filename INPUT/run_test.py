@@ -6,9 +6,9 @@ if __name__ == '__main__':
 
     The simplest case of a VASP run.
 
-    Load the yaml file and copy it to the directory where the run is about to
+    Load the specs file and copy it to the directory where the run is about to
     take place. Create a new file 'stdout' to capture the screen output. Read
-    some VASP file objects from the yaml file and write them to disk, and
+    some VASP file objects from the specs file and write them to disk, and
     finally run VASP.
 
     """

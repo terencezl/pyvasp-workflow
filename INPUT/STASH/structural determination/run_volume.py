@@ -8,6 +8,13 @@ import pydass_vasp
 
 
 def volume_fitting(structure, is_mag, fitting_results):
+    """
+
+    Construct a loop to get and fit the energy with changing volumes, return
+    some indicators showing if the fit is "good" or not.
+
+    """
+
     volume = np.linspace(V_begin, V_end, V_sample_point_num)
     energy = np.zeros(len(volume))
     mag = np.zeros(len(volume))

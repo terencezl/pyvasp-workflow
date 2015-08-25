@@ -56,7 +56,7 @@ if __name__ == '__main__':
     incar.update(run_specs['bs_hybrid']['incar'])
     # obtain the automatically generated kpoints list
     hskp = mg.symmetry.bandstructure.HighSymmKpath(structure)
-    kpts_bs = hskp.get_kpoints(run_specs['bs_hybrid']['kpoints_division'], return_cartesian=False)
+    kpts_bs = hskp.get_kpoints(run_specs['bs_hybrid']['kpoints_division'], coords_are_cartesian=False)
     kpoints = mg.io.vasp.Kpoints.from_file('IBZKPT')
     kpoints.kpts.extend([i.tolist() for i in kpts_bs[0]])
     kpoints.kpts_weights.extend([0 for i in kpts_bs[0]])

@@ -64,7 +64,7 @@ if __name__ == '__main__':
         structure = mg.Structure.from_file('CONTCAR')
         structure.to(filename='POSCAR')
         if 'rerun' in run_specs:
-            incar.update(run_specs['relax']['incar'])
+            incar.update(run_specs['rerun']['incar'])
             incar.write_file('INCAR')
             kpoints = read_kpoints(run_specs['rerun'], structure)
             kpoints.write_file('KPOINTS')

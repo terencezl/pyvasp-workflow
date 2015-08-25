@@ -19,8 +19,8 @@ if __name__ == '__main__':
 
     You should set a 'elastic' tag in the specs file, like
 
-    elastic:
-      cryst_sys: cubic
+        elastic:
+          cryst_sys: cubic
 
     """
 

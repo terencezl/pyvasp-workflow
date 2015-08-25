@@ -15,9 +15,9 @@ if __name__ == '__main__':
 
     You should set a 'elastic' tag in the specs file, like
 
-    elastic:
-      cryst_sys: cubic
-      test_type: c11-c12
+        elastic:
+          cryst_sys: cubic
+          test_type: c11-c12
 
     The 'test_type' tag defines the name of the strain set, whose mathematical
     form is detailed in run_module_elastic.py.

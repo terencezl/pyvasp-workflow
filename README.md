@@ -96,7 +96,7 @@ python INPUT/run_test.py INPUT/run_tset_2.yaml
 Priority Rules
 --------------
 
-There are a few priority rules implemented throughout most routines regarding what parameter to take. This gives flexibility to the scripts by just not setting some tags in th specs file. However, whatever you provide in the specs will be given precedence.
+There are a few priority rules implemented for most example routines regarding which value for a certain parameter to take, if there are more than one to choose from. This gives flexibility to the scripts by simply omitting setting some tags in th specs file. However, whatever you provide in the specs will be given precedence to.
 
 * For INCAR, if 'ISPIN' is not provided in the specs file under 'incar', a ../properties.json file is attempted and if it exists, it should contain a 'mag' field with the cell's magnetic moment. ISPIN value is set to 2 if mag is larger than 0.001.
 

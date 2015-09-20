@@ -1,7 +1,7 @@
 import os
 import shutil
 import numpy as np
-from run_module import *
+import run_module as rmd
 import matplotlib.pyplot as plt
 import pymatgen as mg
 import pydass_vasp
@@ -24,8 +24,8 @@ def volume_fitting(structure, is_mag, fitting_results):
         kpoints.write_file('KPOINTS')
         structure.scale_lattice(V)
         structure.to(filename='POSCAR')
-        write_potcar(run_specs)
-        run_vasp()
+        rmd.write_potcar(run_specs)
+        rmd.run_vasp()
         oszicar = mg.io.vasp.Oszicar('OSZICAR')
         energy[i] = oszicar.final_energy
         structure = mg.Structure.from_file('CONTCAR')
@@ -35,7 +35,7 @@ def volume_fitting(structure, is_mag, fitting_results):
 
     # dump in case error in fitting
     fitting_results.append({'volume': volume.tolist(), 'energy': energy.tolist(), 'mag': mag.tolist(), 'structures': structures})
-    filedump(fitting_results, 'fitting_results.json')
+    rmd.filedump(fitting_results, 'fitting_results.json')
     # plot in case error in fitting
     plt.plot(volume, energy, 'o')
     plt.tight_layout()
@@ -45,13 +45,13 @@ def volume_fitting(structure, is_mag, fitting_results):
     fitting_result_raw = pydass_vasp.fitting.eos_fit(volume, energy, save_figs=True)
     fitting_results[-1]['params'] = fitting_result_raw['params']
     fitting_results[-1]['r_squared'] = fitting_result_raw['r_squared']
-    filedump(fitting_results, 'fitting_results.json')
+    rmd.filedump(fitting_results, 'fitting_results.json')
     # a simplifed version of the file dump
     fitting_params = fitting_result_raw['params'].copy()
     fitting_params['r_squared'] = fitting_result_raw['r_squared']
-    filedump(fitting_params, 'fitting_params.json')
+    rmd.filedump(fitting_params, 'fitting_params.json')
 
-    is_mag = detect_is_mag(mag)
+    is_mag = rmd.detect_is_mag(mag)
     # uncomment to make calculation faster by switching off ISPIN if possible
     # if not is_mag:
         # incar.update({'ISPIN': 1})
@@ -82,26 +82,26 @@ if __name__ == '__main__':
     If 'volume' does not exist, a ../properties.json file is attempted and if it
     exists, it should contain a 'V0' field, the volume range is constructed with
     5 points between 0.9 * V0 and 1.1 * V0. If this file doesn't exsit, the
-    volume of the structure returned by get_structure() is used to do the
+    volume of the structure returned by rmd.get_structure() is used to do the
     same construction.
 
     """
 
-    run_specs, filename = get_run_specs_and_filename()
-    chdir(get_run_dir(run_specs))
-    filedump(run_specs, filename)
-    init_stdout()
+    run_specs, filename = rmd.get_run_specs_and_filename()
+    rmd.chdir(rmd.get_run_dir(run_specs))
+    rmd.filedump(run_specs, filename)
+    rmd.init_stdout()
 
-    incar = read_incar(run_specs)
+    incar = rmd.read_incar(run_specs)
     is_properties = None
     if os.path.isfile(('../properties.json')):
         is_properties = True
-        properties = fileload('../properties.json')
+        properties = rmd.fileload('../properties.json')
 
     if 'ISPIN' in incar:
         is_mag = incar['ISPIN'] == 2
     elif is_properties:
-        is_mag = detect_is_mag(properties['mag'])
+        is_mag = rmd.detect_is_mag(properties['mag'])
         if is_mag:
             incar.update({'ISPIN': 2})
         else:
@@ -111,11 +111,11 @@ if __name__ == '__main__':
 
     # higher priority for run_specs
     if 'poscar' in run_specs:
-        structure = get_structure(run_specs)
+        structure = rmd.get_structure(run_specs)
     elif os.path.isfile('../POSCAR'):
         structure = mg.Structure.from_file('../POSCAR')
 
-    kpoints = read_kpoints(run_specs, structure)
+    kpoints = rmd.read_kpoints(run_specs, structure)
 
     if 'volume' in run_specs and run_specs['volume']:
         volume_params = run_specs['volume']
@@ -146,7 +146,7 @@ if __name__ == '__main__':
     # equilibrium volume run
     structure.scale_lattice(V0)
     structure.to(filename='POSCAR')
-    run_vasp()
+    rmd.run_vasp()
     oszicar = mg.io.vasp.Oszicar('OSZICAR')
     E0 = oszicar.final_energy
     if is_mag:
@@ -158,12 +158,12 @@ if __name__ == '__main__':
     # dump properties.json
     if is_properties:
         # load again immediately before save
-        properties = fileload('../properties.json')
+        properties = rmd.fileload('../properties.json')
     else:
         properties = {}
     properties['V0'] = fitting_results[-1]['params']['V0']
     properties['B0'] = fitting_results[-1]['params']['B0']
     properties.update({'E0': E0, 'mag': mag})
-    filedump(properties, '../properties.json')
+    rmd.filedump(properties, '../properties.json')
 
     shutil.copy('CONTCAR', '../POSCAR')

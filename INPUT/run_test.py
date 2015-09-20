@@ -1,4 +1,4 @@
-from run_module import *
+import run_module as rmd
 
 
 if __name__ == '__main__':
@@ -14,19 +14,19 @@ if __name__ == '__main__':
     """
 
     # pre-config
-    run_specs, filename = get_run_specs_and_filename()
-    chdir(get_run_dir(run_specs))
-    filedump(run_specs, filename)
-    init_stdout()
+    run_specs, filename = rmd.get_run_specs_and_filename()
+    rmd.chdir(rmd.get_run_dir(run_specs))
+    rmd.filedump(run_specs, filename)
+    rmd.init_stdout()
 
     # read settings
-    incar = read_incar(run_specs)
-    structure = get_structure(run_specs)
-    kpoints = read_kpoints(run_specs, structure)
+    incar = rmd.read_incar(run_specs)
+    structure = rmd.get_structure(run_specs)
+    kpoints = rmd.read_kpoints(run_specs, structure)
 
     # write input files and run vasp
     incar.write_file('INCAR')
     kpoints.write_file('KPOINTS')
     structure.to(filename='POSCAR')
-    write_potcar(run_specs)
-    run_vasp()
+    rmd.write_potcar(run_specs)
+    rmd.run_vasp()

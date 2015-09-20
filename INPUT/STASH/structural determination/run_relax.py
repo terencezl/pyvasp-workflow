@@ -1,5 +1,5 @@
 import os
-from run_module import *
+import run_module as rmd
 import pymatgen as mg
 from glob import glob
 
@@ -40,28 +40,28 @@ if __name__ == '__main__':
     """
 
     # pre-config
-    run_specs, filename = get_run_specs_and_filename()
-    chdir(get_run_dir(run_specs))
-    filedump(run_specs, filename)
-    init_stdout()
+    run_specs, filename = rmd.get_run_specs_and_filename()
+    rmd.chdir(rmd.get_run_dir(run_specs))
+    rmd.filedump(run_specs, filename)
+    rmd.init_stdout()
 
     # read settings
-    incar = read_incar(run_specs)
+    incar = rmd.read_incar(run_specs)
 
     if 'poscar' in run_specs:
-        structure = get_structure(run_specs)
+        structure = rmd.get_structure(run_specs)
     elif os.path.isfile('CONTCAR'):
         structure = mg.Structure.from_file('CONTCAR')
         stack_oszicar()
 
-    kpoints = read_kpoints(run_specs, structure)
+    kpoints = rmd.read_kpoints(run_specs, structure)
 
     # write input files and run vasp
     incar.write_file('INCAR')
     kpoints.write_file('KPOINTS')
     structure.to(filename='POSCAR')
-    write_potcar(run_specs)
-    run_vasp()
+    rmd.write_potcar(run_specs)
+    rmd.run_vasp()
 
     # rerun once according to the specs
     if 'rerun' in run_specs:
@@ -72,13 +72,13 @@ if __name__ == '__main__':
             incar.update(run_specs['rerun']['incar'])
             incar.write_file('INCAR')
         if 'kpoints' in run_specs['rerun']:
-            kpoints = read_kpoints(run_specs['rerun'], structure)
+            kpoints = rmd.read_kpoints(run_specs['rerun'], structure)
             kpoints.write_file('KPOINTS')
-        run_vasp()
+        rmd.run_vasp()
 
     # if not converged ionically, rerun
     while not mg.io.vasp.Vasprun('vasprun.xml').converged_ionic:
         stack_oszicar()
         structure = mg.Structure.from_file('CONTCAR')
         structure.to(filename='POSCAR')
-        run_vasp()
+        rmd.run_vasp()

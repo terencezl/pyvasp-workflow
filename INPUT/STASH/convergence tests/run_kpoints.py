@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from run_module import *
+import run_module as rmd
 import matplotlib.pyplot as plt
 import pymatgen as mg
 
@@ -21,15 +21,15 @@ if __name__ == '__main__':
 
     """
 
-    run_specs, filename = get_run_specs_and_filename()
-    chdir(get_run_dir(run_specs))
-    filedump(run_specs, filename)
-    init_stdout()
-    incar = read_incar(run_specs)
+    run_specs, filename = rmd.get_run_specs_and_filename()
+    rmd.chdir(rmd.get_run_dir(run_specs))
+    rmd.filedump(run_specs, filename)
+    rmd.init_stdout()
+    incar = rmd.read_incar(run_specs)
     if os.path.isfile(('../properties.json')):
-        properties = fileload('../properties.json')
+        properties = rmd.fileload('../properties.json')
         if 'ISPIN' not in incar:
-            if detect_is_mag(properties['mag']):
+            if rmd.detect_is_mag(properties['mag']):
                 incar.update({'ISPIN': 2})
             else:
                 incar.update({'ISPIN': 1})
@@ -38,7 +38,7 @@ if __name__ == '__main__':
 
     # higher priority for run_specs
     if 'poscar' in run_specs:
-        structure = get_structure(run_specs)
+        structure = rmd.get_structure(run_specs)
     elif os.path.isfile('../POSCAR'):
         structure = mg.Structure.from_file('../POSCAR')
 
@@ -53,8 +53,8 @@ if __name__ == '__main__':
         kpoints.kpts = [[kp[0], kp[1], kp[2]]]
         kpoints.write_file('KPOINTS')
         structure.to(filename='POSCAR')
-        write_potcar(run_specs)
-        run_vasp()
+        rmd.write_potcar(run_specs)
+        rmd.run_vasp()
         oszicar = mg.io.vasp.Oszicar('OSZICAR')
         energy[i] = oszicar.final_energy
 

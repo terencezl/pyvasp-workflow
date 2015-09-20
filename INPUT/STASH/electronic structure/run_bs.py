@@ -1,5 +1,5 @@
 import os
-from run_module import *
+import run_module as rmd
 import pymatgen as mg
 import pymatgen.electronic_structure.plotter
 
@@ -21,33 +21,33 @@ if __name__ == '__main__':
 
     """
 
-    run_specs, filename = get_run_specs_and_filename()
-    chdir(get_run_dir(run_specs))
-    filedump(run_specs, filename)
-    init_stdout()
-    incar = read_incar(run_specs)
+    run_specs, filename = rmd.get_run_specs_and_filename()
+    rmd.chdir(rmd.get_run_dir(run_specs))
+    rmd.filedump(run_specs, filename)
+    rmd.init_stdout()
+    incar = rmd.read_incar(run_specs)
     if os.path.isfile('../properties.json'):
-        properties = fileload('../properties.json')
+        properties = rmd.fileload('../properties.json')
         if 'ISPIN' not in incar:
-            if detect_is_mag(properties['mag']):
+            if rmd.detect_is_mag(properties['mag']):
                 incar.update({'ISPIN': 2})
             else:
                 incar.update({'ISPIN': 1})
 
     # higher priority for run_specs
     if 'poscar' in run_specs:
-        structure = get_structure(run_specs)
+        structure = rmd.get_structure(run_specs)
     elif os.path.isfile('../POSCAR'):
         structure = mg.Structure.from_file('../POSCAR')
 
-    kpoints = read_kpoints(run_specs, structure)
+    kpoints = rmd.read_kpoints(run_specs, structure)
 
     # first SC run
     incar.write_file('INCAR')
     kpoints.write_file('KPOINTS')
     structure.to(filename='POSCAR')
-    write_potcar(run_specs)
-    run_vasp()
+    rmd.write_potcar(run_specs)
+    rmd.run_vasp()
 
     # second non-SC run
     structure = mg.Structure.from_file('CONTCAR')
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     incar.write_file('INCAR')
     kpoints.write_file('KPOINTS')
     structure.to(filename='POSCAR')
-    run_vasp()
+    rmd.run_vasp()
 
     vasprun = mg.io.vasp.Vasprun('vasprun.xml')
     bs = vasprun.get_band_structure()

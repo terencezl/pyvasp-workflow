@@ -1,8 +1,8 @@
 import os
 import shutil
 import numpy as np
-from run_module import *
-from run_module_elastic import *
+import run_module as rmd
+import run_module_elastic as rmd_e
 import pymatgen as mg
 import pydass_vasp
 
@@ -28,22 +28,22 @@ if __name__ == '__main__':
 
     """
 
-    run_specs, filename = get_run_specs_and_filename()
-    chdir(get_run_dir(run_specs))
-    filedump(run_specs, filename)
+    run_specs, filename = rmd.get_run_specs_and_filename()
+    rmd.chdir(rmd.get_run_dir(run_specs))
+    rmd.filedump(run_specs, filename)
 
     cryst_sys = run_specs['elastic']['cryst_sys']
     test_type_input = run_specs['elastic']['test_type']
-    incar = read_incar(run_specs)
+    incar = rmd.read_incar(run_specs)
     is_properties = None
     if os.path.isfile(('../properties.json')):
         is_properties = True
-        properties = fileload('../properties.json')
+        properties = rmd.fileload('../properties.json')
 
     if 'ISPIN' in incar:
         is_mag = incar['ISPIN'] == 2
     elif is_properties:
-        is_mag = detect_is_mag(properties['mag'])
+        is_mag = rmd.detect_is_mag(properties['mag'])
         if is_mag:
             incar.update({'ISPIN': 2})
         else:
@@ -53,21 +53,21 @@ if __name__ == '__main__':
 
     # higher priority for run_specs
     if 'poscar' in run_specs:
-        structure = get_structure(run_specs)
+        structure = rmd.get_structure(run_specs)
     elif os.path.isfile('../POSCAR'):
         structure = mg.Structure.from_file('../POSCAR')
 
-    kpoints = read_kpoints(run_specs, structure)
+    kpoints = rmd.read_kpoints(run_specs, structure)
 
-    test_type_list, strain_list, delta_list = get_test_type_strain_delta_list(cryst_sys)
+    test_type_list, strain_list, delta_list = rmd_e.get_test_type_strain_delta_list(cryst_sys)
     for test_type, strain, delta in zip(test_type_list, strain_list, delta_list):
         if test_type == test_type_input:
-            chdir(test_type)
+            rmd.chdir(test_type)
             energy = np.zeros(len(delta))
             mag = np.zeros(len(delta))
             for ind, value in enumerate(delta):
-                chdir(str(value))
-                init_stdout()
+                rmd.chdir(str(value))
+                rmd.init_stdout()
                 incar.write_file('INCAR')
                 kpoints.write_file('KPOINTS')
                 lattice_modified = mg.Lattice(
@@ -75,28 +75,28 @@ if __name__ == '__main__':
                 structure_copy = structure.copy()
                 structure_copy.modify_lattice(lattice_modified)
                 structure_copy.to(filename='POSCAR')
-                write_potcar(run_specs)
-                run_vasp()
+                rmd.write_potcar(run_specs)
+                rmd.run_vasp()
                 oszicar = mg.io.vasp.Oszicar('OSZICAR')
                 energy[ind] = oszicar.final_energy
                 if is_mag:
                     mag[ind] = oszicar.ionic_steps[-1]['mag']
                 os.chdir('..')
 
-            fitting_results = pydass_vasp.fitting.curve_fit(central_poly, delta, energy, save_figs=True,
+            fitting_results = pydass_vasp.fitting.curve_fit(rmd_e.central_poly, delta, energy, save_figs=True,
                       output_prefix=test_type)
             fitting_results['params'] = fitting_results['params'].tolist()
             fitting_results.pop('fitted_data')
             fitting_results['delta'] = delta.tolist()
             fitting_results['energy'] = energy.tolist()
             fitting_results['mag'] = mag.tolist()
-            filedump(fitting_results, 'fitting_results.json')
+            rmd.filedump(fitting_results, 'fitting_results.json')
             # higher level fitting_results.json
             if os.path.isfile('../fitting_results.json'):
-                fitting_results_summary = fileload('../fitting_results.json')
+                fitting_results_summary = rmd.fileload('../fitting_results.json')
             else:
                 fitting_results_summary = {}
             fitting_results_summary[test_type] = fitting_results
-            filedump(fitting_results_summary, '../fitting_results.json')
+            rmd.filedump(fitting_results_summary, '../fitting_results.json')
             shutil.copy(test_type + '.pdf', '..')
             os.chdir('..')

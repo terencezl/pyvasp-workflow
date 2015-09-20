@@ -2,7 +2,7 @@ import os
 from subprocess import call
 import glob
 import numpy as np
-from run_module import *
+import run_module as rmd
 
 
 if __name__ == '__main__':
@@ -21,18 +21,18 @@ if __name__ == '__main__':
 
     """
 
-    run_specs, filename = get_run_specs_and_filename()
-    chdir(get_run_dir(run_specs))
+    run_specs, filename = rmd.get_run_specs_and_filename()
+    rmd.chdir(rmd.get_run_dir(run_specs))
 
     phonopy_dim = ' '.join(map(str, run_specs['phonopy']['dim']))
     phonopy_mp = ' '.join(map(str, run_specs['phonopy']['mp']))
     phonopy_tmax = str(run_specs['phonopy']['tmax'])
     phonopy_tstep = str(run_specs['phonopy']['tstep'])
-    fitting_results = fileload('../run_volume/fitting_results.json')[-1]
+    fitting_results = rmd.fileload('../run_volume/fitting_results.json')[-1]
     volume = np.round(np.array(fitting_results['volume']), 2)
 
     for V in volume:
-        chdir(str(V))
+        rmd.chdir(str(V))
         disp_dirs = sorted(glob.glob('disp-*'))
         disp_vasprun_xml = ' '.join([i + '/vasprun.xml' for i in disp_dirs])
         call('phonopy -f ' + disp_vasprun_xml + ' > /dev/null 2>&1', shell=True)
@@ -40,7 +40,7 @@ if __name__ == '__main__':
         os.chdir('..')
 
     # post processing
-    fitting_results = fileload('../run_volume/fitting_results.json')[-1]
+    fitting_results = rmd.fileload('../run_volume/fitting_results.json')[-1]
     e_v_dat = np.column_stack((fitting_results['volume'], fitting_results['energy']))
     np.savetxt('../e-v.dat', e_v_dat, '%15.6f', header='volume energy')
     thermal_properties = ' '.join([str(i) + '/thermal_properties.yaml' for i in volume])

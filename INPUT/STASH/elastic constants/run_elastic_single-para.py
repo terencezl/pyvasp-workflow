@@ -1,8 +1,8 @@
 import os
 import shutil
 import numpy as np
-from run_module import *
-from run_module_elastic import *
+import run_module as rmd
+import run_module_elastic as rmd_e
 import pymatgen as mg
 from subprocess import call
 
@@ -32,23 +32,23 @@ if __name__ == '__main__':
 
     """
 
-    run_specs, filename = get_run_specs_and_filename()
+    run_specs, filename = rmd.get_run_specs_and_filename()
     cwd = os.getcwd()
-    chdir(get_run_dir(run_specs))
-    filedump(run_specs, filename)
+    rmd.chdir(rmd.get_run_dir(run_specs))
+    rmd.filedump(run_specs, filename)
 
     test_type_input = run_specs['elastic']['test_type']
     cryst_sys = run_specs['elastic']['cryst_sys']
-    incar = read_incar(run_specs)
+    incar = rmd.read_incar(run_specs)
     is_properties = None
     if os.path.isfile(('../properties.json')):
         is_properties = True
-        properties = fileload('../properties.json')
+        properties = rmd.fileload('../properties.json')
 
     if 'ISPIN' in incar:
         is_mag = incar['ISPIN'] == 2
     elif is_properties:
-        is_mag = detect_is_mag(properties['mag'])
+        is_mag = rmd.detect_is_mag(properties['mag'])
         if is_mag:
             incar.update({'ISPIN': 2})
         else:
@@ -58,19 +58,19 @@ if __name__ == '__main__':
 
     # higher priority for run_specs
     if 'poscar' in run_specs:
-        structure = get_structure(run_specs)
+        structure = rmd.get_structure(run_specs)
     elif os.path.isfile('../POSCAR'):
         structure = mg.Structure.from_file('../POSCAR')
 
-    kpoints = read_kpoints(run_specs, structure)
+    kpoints = rmd.read_kpoints(run_specs, structure)
 
-    test_type_list, strain_list, delta_list = get_test_type_strain_delta_list(cryst_sys)
+    test_type_list, strain_list, delta_list = rmd_e.get_test_type_strain_delta_list(cryst_sys)
     for test_type, strain, delta in zip(test_type_list, strain_list, delta_list):
         if test_type == test_type_input:
-            chdir(test_type)
+            rmd.chdir(test_type)
             for ind, value in enumerate(delta):
-                chdir(str(value))
-                init_stdout()
+                rmd.chdir(str(value))
+                rmd.init_stdout()
                 incar.write_file('INCAR')
                 kpoints.write_file('KPOINTS')
                 lattice_modified = mg.Lattice(
@@ -78,7 +78,7 @@ if __name__ == '__main__':
                 structure_copy = structure.copy()
                 structure_copy.modify_lattice(lattice_modified)
                 structure_copy.to(filename='POSCAR')
-                write_potcar(run_specs)
+                rmd.write_potcar(run_specs)
                 job = test_type + '-' + str(value)
                 shutil.copy(cwd + '/INPUT/deploy.job', job)
                 call('sed -i "/python/c time ' + VASP_EXEC + ' 2>&1 | tee -a stdout" ' + job, shell=True)

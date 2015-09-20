@@ -83,8 +83,6 @@ if __name__ == '__main__':
                     mag[ind] = oszicar.ionic_steps[-1]['mag']
                 os.chdir('..')
 
-            if 'LWAVE' not in incar:
-                os.remove('WAVECAR')
             fitting_results = pydass_vasp.fitting.curve_fit(central_poly, delta, energy, save_figs=True,
                       output_prefix=test_type)
             fitting_results['params'] = fitting_results['params'].tolist()

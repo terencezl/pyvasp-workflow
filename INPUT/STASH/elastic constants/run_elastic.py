@@ -69,8 +69,6 @@ if __name__ == '__main__':
     structure = mg.Structure.from_file('CONTCAR')
     if is_mag:
         mag_nostrain = oszicar.ionic_steps[-1]['mag']
-    if 'LWAVE' not in incar:
-        os.remove('WAVECAR')
     os.chdir('..')
 
     for test_type, strain, delta in \
@@ -100,8 +98,6 @@ if __name__ == '__main__':
                 mag[ind+1] = oszicar.ionic_steps[-1]['mag']
             os.chdir('..')
 
-        if 'LWAVE' not in incar:
-            os.remove('WAVECAR')
         fitting_results = pydass_vasp.fitting.curve_fit(central_poly, delta, energy, save_figs=True,
                     output_prefix=test_type)
         combined_econst_array.append(fitting_results['params'][0])

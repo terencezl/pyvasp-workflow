@@ -154,8 +154,6 @@ if __name__ == '__main__':
     else:
         mag = 0
 
-    if 'LWAVE' not in incar:
-        os.remove('WAVECAR')
 
     # dump properties.json
     if is_properties:

@@ -24,7 +24,7 @@ if __name__ == '__main__':
     run_specs, filename = get_run_specs_and_filename()
     chdir(get_run_dir(run_specs))
 
-    cryst_sys = run_specs['poscar']['cryst_sys']
+    cryst_sys = run_specs['elastic']['cryst_sys']
     is_properties = None
     if os.path.isfile(('../properties.json')):
         is_properties = True

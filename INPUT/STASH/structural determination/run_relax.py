@@ -32,6 +32,11 @@ if __name__ == '__main__':
           kpoints:
             density: 6000
 
+    It will cause the INCAR and/or KPOINTS to change before starting the second
+    and after reruns. This allows for the initial run with a large NSW and low
+    relaxation parameters, and the second and after runs with high relaxation
+    parameters.
+
     """
 
     # pre-config
@@ -58,14 +63,22 @@ if __name__ == '__main__':
     write_potcar(run_specs)
     run_vasp()
 
+    # rerun once according to the specs
+    if 'rerun' in run_specs:
+        stack_oszicar()
+        structure = mg.Structure.from_file('CONTCAR')
+        structure.to(filename='POSCAR')
+        if 'incar' in run_specs['rerun']:
+            incar.update(run_specs['rerun']['incar'])
+            incar.write_file('INCAR')
+        if 'kpoints' in run_specs['rerun']:
+            kpoints = read_kpoints(run_specs['rerun'], structure)
+            kpoints.write_file('KPOINTS')
+        run_vasp()
+
     # if not converged ionically, rerun
     while not mg.io.vasp.Vasprun('vasprun.xml').converged_ionic:
         stack_oszicar()
         structure = mg.Structure.from_file('CONTCAR')
         structure.to(filename='POSCAR')
-        if 'rerun' in run_specs:
-            incar.update(run_specs['rerun']['incar'])
-            incar.write_file('INCAR')
-            kpoints = read_kpoints(run_specs['rerun'], structure)
-            kpoints.write_file('KPOINTS')
         run_vasp()

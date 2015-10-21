@@ -4,7 +4,7 @@ import numpy as np
 import run_module as rmd
 import matplotlib.pyplot as plt
 import pymatgen as mg
-import pydass_vasp
+import pydass_vasp as pv
 
 
 def volume_fitting(structure, is_mag, fitting_results):
@@ -20,6 +20,8 @@ def volume_fitting(structure, is_mag, fitting_results):
     mag = np.zeros(len(volume))
     structures = []
     for i, V in enumerate(volume):
+        if not is_rerun:
+            rmd.chdir(str(np.round(V, 2)))
         incar.write_file('INCAR')
         kpoints.write_file('KPOINTS')
         structure.scale_lattice(V)
@@ -32,6 +34,8 @@ def volume_fitting(structure, is_mag, fitting_results):
         structures.append(structure.as_dict())
         if is_mag:
             mag[i] = oszicar.ionic_steps[-1]['mag']
+        if not is_rerun:
+            os.chdir('..')
 
     # dump in case error in fitting
     fitting_results.append({'volume': volume.tolist(), 'energy': energy.tolist(), 'mag': mag.tolist(), 'structures': structures})
@@ -42,21 +46,27 @@ def volume_fitting(structure, is_mag, fitting_results):
     plt.savefig('eos_fit.pdf')
     plt.close()
     # fitting and dumping
-    fitting_result_raw = pydass_vasp.fitting.eos_fit(volume, energy, save_figs=True)
-    fitting_results[-1]['params'] = fitting_result_raw['params']
+    fitting_result_raw = pv.fitting.eos_fit(volume, energy, plot=True)
+    plt.savefig('eos_fit.pdf')
+    plt.close()
+    params = fitting_result_raw['params']
+    fitting_results[-1]['pressure'] = pv.fitting.fitting.B_M_eqn_pv(volume,
+        params['V0'], params['B0'],
+        params['B0_prime']).tolist()
+    fitting_results[-1]['params'] = params
     fitting_results[-1]['r_squared'] = fitting_result_raw['r_squared']
     rmd.filedump(fitting_results, 'fitting_results.json')
     # a simplifed version of the file dump
-    fitting_params = fitting_result_raw['params'].copy()
+    fitting_params = params.copy()
     fitting_params['r_squared'] = fitting_result_raw['r_squared']
     rmd.filedump(fitting_params, 'fitting_params.json')
 
-    is_mag = rmd.detect_is_mag(mag)
     # uncomment to make calculation faster by switching off ISPIN if possible
+    # is_mag = rmd.detect_is_mag(mag)
     # if not is_mag:
         # incar.update({'ISPIN': 1})
 
-    V0 = fitting_result_raw['params']['V0']
+    V0 = params['V0']
     V0_ralative_pos = (V0 - V_begin) / (V_end - V_begin)
     is_V0_within_valley = V0_ralative_pos > 0.4 and V0_ralative_pos < 0.6
     is_range_proportional = (volume[-1] - volume[0])/V0 < 0.25
@@ -69,8 +79,12 @@ if __name__ == '__main__':
     """
 
     Obtain the equilibrium volume and bulk modulus by third order Burch-
-    Murnaghan EOS fit. If the "goodness" (see the actual code) is not reached,
-    reconstruct the volume range and rerun till the fit is "good".
+    Murnaghan EOS fit.
+
+    Optionally, with the tag 'rerun' set to True, if the "goodness" (see the
+    actual code) is not reached, reconstruct the volume range and rerun till the
+    fit is "good". In this case, subdirectories with names being volume values
+    will not be created to avoid cluttering.
 
     Optionally, you can set a 'volume' tag in the specs file like
 
@@ -133,15 +147,17 @@ if __name__ == '__main__':
         V_end = V0 * 11./10
         V_sample_point_num = 5
 
+    is_rerun = True if 'rerun' in run_specs and run_specs['rerun'] else False
     fitting_results = []
     # first round
     is_well_fitted, V0, structure, is_mag = volume_fitting(structure, is_mag, fitting_results)
 
     # possible next rounds
-    while not is_well_fitted:
-        V_begin = V0 * 9./10
-        V_end = V0 * 11./10
-        is_well_fitted, V0, structure, is_mag = volume_fitting(structure, is_mag, fitting_results)
+    if is_rerun:
+        while not is_well_fitted:
+            V_begin = V0 * 9./10
+            V_end = V0 * 11./10
+            is_well_fitted, V0, structure, is_mag = volume_fitting(structure, is_mag, fitting_results)
 
     # equilibrium volume run
     structure.scale_lattice(V0)
@@ -153,7 +169,6 @@ if __name__ == '__main__':
         mag = oszicar.ionic_steps[-1]['mag']
     else:
         mag = 0
-
 
     # dump properties.json
     if is_properties:

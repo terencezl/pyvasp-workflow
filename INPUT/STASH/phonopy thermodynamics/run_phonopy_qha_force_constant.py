@@ -67,8 +67,8 @@ if __name__ == '__main__':
             os.remove(f)
         rmd.write_potcar(run_specs)
         rmd.run_vasp()
-        call('phonopy --fc vasprun.xml > /dev/null 2>&1', shell=True)
-        call('phonopy --readfc -c POSCAR_orig --mp="' + phonopy_mp + '" -tsp --dim="' + phonopy_dim + '" --tmax=' + phonopy_tmax + ' --tstep=' + phonopy_tstep + ' > /dev/null 2>&1', shell=True)
+        call('phonopy --fc vasprun.xml > /dev/null', shell=True)
+        call('phonopy --readfc -c POSCAR_orig --mp="' + phonopy_mp + '" -tsp --dim="' + phonopy_dim + '" --tmax=' + phonopy_tmax + ' --tstep=' + phonopy_tstep + ' > /dev/null', shell=True)
         os.chdir('..')
 
     # post processing
@@ -76,4 +76,4 @@ if __name__ == '__main__':
     e_v_dat = np.column_stack((fitting_results['volume'], fitting_results['energy']))
     np.savetxt('../e-v.dat', e_v_dat, '%15.6f', header='volume energy')
     thermal_properties = ' '.join([str(i) + '/thermal_properties.yaml' for i in volume])
-    call('phonopy-qha ../e-v.dat ' + thermal_properties + ' --tmax=' + phonopy_tmax + ' > /dev/null 2>&1', shell=True)
+    call('phonopy-qha ../e-v.dat ' + thermal_properties + ' --tmax=' + phonopy_tmax + ' > /dev/null', shell=True)

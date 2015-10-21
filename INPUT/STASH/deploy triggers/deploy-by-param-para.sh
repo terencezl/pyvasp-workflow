@@ -24,10 +24,9 @@ for i in 40 50 60; do
     task_specs_suffixed=${task_specs##*/}
     task_specs_suffixed=${task_specs_suffixed%.yaml}_${suffix}.yaml
     python -c "
-from os import chdir
-chdir('INPUT')
+import sys
+sys.path = ['$PWD/INPUT'] + sys.path
 from run_module import fileload, filedump, get_run_dir
-chdir('..')
 run_specs = fileload('${task_specs}')
 # suffix the run directory and changing parameter
 run_specs['run_dir'] += '-$i'

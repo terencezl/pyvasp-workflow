@@ -22,16 +22,15 @@ for i in 288.5 266 304; do
     task_specs_suffixed=${task_specs##*/}
     task_specs_suffixed=${task_specs_suffixed%.yaml}_${suffix}.yaml
     job=`python -c "
-from os import chdir
-chdir('INPUT')
+import sys
+sys.path = ['$PWD/INPUT'] + sys.path
 from run_module import fileload, filedump, get_run_dir
-chdir('..')
 run_specs = fileload('${task_specs}')
 # suffix the run directory and changing parameter
 run_specs['run_dir'] += '-$i'
 run_specs['poscar']['volume'] = $i
 filedump(run_specs, '${task_specs_suffixed}')
-print(get_run_dir(run_specs).replace('/', '-'))
+print(get_run_dir(run_specs).replace('/', '-') + '.job')
     "`
     cp INPUT/deploy.job "$job"
     sed -i "/python/c python INPUT/${task}.py $task_specs_suffixed --remove_file" "$job"

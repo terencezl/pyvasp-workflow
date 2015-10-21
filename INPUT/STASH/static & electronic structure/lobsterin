@@ -1,0 +1,5 @@
+COHPstartEnergy -10
+COHPendEnergy 5
+COHPsteps 2000
+! gaussianSmearingWidth 0.1
+cohpGenerator from 1 to 3.5

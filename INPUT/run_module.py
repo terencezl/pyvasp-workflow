@@ -91,17 +91,24 @@ def get_run_dir(run_specs):
 
     Get the directory where the routine takes place.
 
-    If 'run_dir' is in the specs file, use that. Otherwise, use a naming scheme
-    that combines 'structure', 'elem_types' and 'run_subdir'. If none of them
-    exists, name it 'vasp_test'.
+    If 'run_dir' is in the specs file, use that.
+
+    Otherwise, use a naming scheme that combines 'structure' and 'elem_types'.
+    If either 'run_supdir' or 'run_subdir' exist, wrap up this naming scheme
+    with them.
+
+    If none of the two exists, name it 'vasp_test'.
 
     """
 
     if 'run_dir' in run_specs:
         dirname = run_specs['run_dir']
-    elif 'structure' in run_specs and 'elem_types' in run_specs and 'run_subdir' in run_specs:
+    elif 'structure' in run_specs and 'elem_types' in run_specs:
         dirname = run_specs['structure'] + '-' + '+'.join(run_specs['elem_types'])
-        dirname = os.path.join(dirname, run_specs['run_subdir'])
+        if 'run_subdir' in run_specs:
+            dirname = os.path.join(dirname, run_specs['run_subdir'])
+        if 'run_supdir' in run_specs:
+            dirname = os.path.join(run_specs['run_supdir'], dirname)
     else:
         dirname = 'vasp_test'
 
@@ -211,19 +218,34 @@ def get_structure(run_specs):
 
     If 'material_id' is present in 'poscar', MAPI_KEY environmental variable
     needs to be set according to the Materials Project (materialsproject.org).
-    An optional 'get_structure' can be set to one of ['sorted', 'reduced',
-    'primitive', 'primitive_standard', 'conventional_standard', 'refined'].
-    Please refer to the actual code of this function to see what they are
-    exactly.
+
+    An optional 'get_structure' can be set to one of
+
+        ['primitive', 'reduced', 'sorted', 'conventional_standard',
+         'primitive_standard', 'refined']
+
+    For 'primitive', 'conventional_standard' and on, an additional tag 'prec'
+    controls the tolerence/symmetry finding precision threshold.
+
+    The 'primitive', 'reduced' and 'sorted' are methods of the object
+    pmg.Structure, while the rest are methods of
+    pmg.symmetry.analyzer.SpacegroupAnalyzer. Please refer to the actual code to
+    see what they are exactly. Be careful, because from 'sorted' and on, the
+    methods sort the sequence of elements to a standard (electronegativity), so
+    the elements you provide in 'elem_types' could have a chance of not aligning
+    with the ones in the structure. When in doubt, always manually run the
+    pymatgen commands and see the outcome structure.
 
     For the above two ways, by default, the element types in the structure will
-    be replaced according to 'elem_types' in the specs file, but you have to make
-    sure the element type sequences of the structure and 'elem_types' are right.
-    If on the other hand, you want to skip specifying 'elem_types' and simply
-    use the element types in the structure, set 'use_structure_elem_types' to
-    True, and 'elem_types' will be ignored even provided.
+    be replaced according to 'elem_types' in the specs file, but you have to
+    make sure the element type sequences of the structure and 'elem_types' are
+    right. If on the other hand, you want to skip specifying 'elem_types' and
+    simply use the element types in the structure, set
+    'use_structure_elem_types' to True, and 'elem_types' will be ignored even
+    provided.
 
     An optional 'volume' can be set to scale the structure of the template.
+
 
     If neither of the above is present, the manual generation from spacegroup
     is done by specifying
@@ -259,20 +281,21 @@ def get_structure(run_specs):
         is_material_id = True
         m = mg.MPRester()
         structure = m.get_structure_by_material_id(poscar_spec['material_id'])
-        if 'get_structure' in poscar_spec:
-            sga = mg.symmetry.analyzer.SpacegroupAnalyzer(structure, symprec=0.01)
-            if poscar_spec['get_structure'] == 'sorted':
-                structure = structure.get_sorted_structure()
-            if poscar_spec['get_structure'] == 'reduced':
-                structure = structure.get_reduced_structure()
-            elif poscar_spec['get_structure'] == 'primitive':
-                structure = structure.get_primitive_structure(0.01)
-            elif poscar_spec['get_structure'] == 'primitive_standard':
-                structure = sga.get_primitive_standard_structure()
-            elif poscar_spec['get_structure'] == 'conventional_standard':
-                structure = sga.get_conventional_standard_structure()
-            elif poscar_spec['get_structure'] == 'refined':
-                structure = sga.get_refined_structure()
+    if 'get_structure' in poscar_spec:
+        prec = poscar_spec['prec'] if 'prec' in poscar_spec else 0.01
+        sga = mg.symmetry.analyzer.SpacegroupAnalyzer(structure, symprec=prec)
+        if poscar_spec['get_structure'] == 'sorted':
+            structure = structure.get_sorted_structure()
+        if poscar_spec['get_structure'] == 'reduced':
+            structure = structure.get_reduced_structure()
+        elif poscar_spec['get_structure'] == 'primitive':
+            structure = structure.get_primitive_structure(prec)
+        elif poscar_spec['get_structure'] == 'primitive_standard':
+            structure = sga.get_primitive_standard_structure()
+        elif poscar_spec['get_structure'] == 'conventional_standard':
+            structure = sga.get_conventional_standard_structure()
+        elif poscar_spec['get_structure'] == 'refined':
+            structure = sga.get_refined_structure()
 
     if is_template or is_material_id:
         if 'use_structure_elem_types' in poscar_spec and poscar_spec['use_structure_elem_types']:
@@ -346,3 +369,16 @@ def detect_is_mag(mag, tol=1e-3):
     elif isinstance(mag, float) or isinstance(mag, int):
         is_mag = np.abs(mag) >= tol
     return is_mag
+
+
+def get_max_ENMAX(potcars):
+    """
+
+    Get the largest ENMAX from POTCAR.
+
+    """
+    max_ENMAX = 0
+    for potcar in potcars:
+        if potcar.keywords['ENMAX'] > max_ENMAX:
+            max_ENMAX = potcar.keywords['ENMAX']
+    return max_ENMAX

@@ -65,16 +65,18 @@ I assume your supercomputer is using a queueing system to manage multi-users, wh
    # create a directory to store the executable and enter it
    mkdir -p ~/local/bin
    cd ~/local/bin
-   # write the executable
+
+   # write the executable script M
    cat > M <<!
    #!/usr/bin/env bash
-   qsub $@
+   qsub "$@"
    !
+
    # make file executable
    chmod +x M
 
-   # edit ~/.bashrc yourself
-   export PATH="$PATH:~/local/bin"
+   # edit ~/.bashrc yourself, or append to it
+   echo 'export PATH="$PATH:~/local/bin"' >> ~/.bashrc
    ```
 
 5. Go back one directory to the directory root, looking at `INPUT/`, and type in
@@ -89,8 +91,8 @@ I assume your supercomputer is using a queueing system to manage multi-users, wh
 
 ```bash
 python INPUT/run_test.py
-# or for INPUT/run_test_2.yaml
-python INPUT/run_test.py INPUT/run_tset_2.yaml
+# or for the specs file INPUT/run_test_2.yaml
+python INPUT/run_test.py INPUT/run_test_2.yaml
 ```
 
 Priority Rules

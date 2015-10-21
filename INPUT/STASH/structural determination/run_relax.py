@@ -2,6 +2,7 @@ import os
 import run_module as rmd
 import pymatgen as mg
 from glob import glob
+import shutil
 
 
 def stack_oszicar():
@@ -26,7 +27,7 @@ if __name__ == '__main__':
         rerun:
           incar:
             ENCUT: 520
-            PREC: High
+            PREC: A
             IBRION: 1
             EDIFFG: -0.005
           kpoints:
@@ -51,8 +52,8 @@ if __name__ == '__main__':
     if 'poscar' in run_specs:
         structure = rmd.get_structure(run_specs)
     elif os.path.isfile('CONTCAR'):
-        structure = mg.Structure.from_file('CONTCAR')
         stack_oszicar()
+        structure = mg.Structure.from_file('CONTCAR')
 
     kpoints = rmd.read_kpoints(run_specs, structure)
 
@@ -82,3 +83,5 @@ if __name__ == '__main__':
         structure = mg.Structure.from_file('CONTCAR')
         structure.to(filename='POSCAR')
         rmd.run_vasp()
+
+    shutil.copy('CONTCAR', '../POSCAR')

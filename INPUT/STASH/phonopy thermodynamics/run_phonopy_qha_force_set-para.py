@@ -70,7 +70,7 @@ if __name__ == '__main__':
             rmd.write_potcar(run_specs)
             job = str(V) + '-' + disp_d
             shutil.copy(cwd + '/INPUT/deploy.job', job)
-            call('sed -i "/python/c time ' + VASP_EXEC + ' 2>&1 | tee -a stdout" ' + job, shell=True)
+            call('sed -i "/python/c time ' + rmd.VASP_EXEC + ' 2>&1 | tee -a stdout" ' + job, shell=True)
             call('M ' + job, shell=True)
             os.remove(job)
             os.chdir('..')

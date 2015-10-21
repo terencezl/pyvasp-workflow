@@ -54,7 +54,6 @@ if __name__ == '__main__':
 
     kpoints = rmd.read_kpoints(run_specs, structure)
 
-    combined_econst_array = []
     fitting_results_summary = {}
 
     rmd.chdir('nostrain')
@@ -71,8 +70,14 @@ if __name__ == '__main__':
         mag_nostrain = oszicar.ionic_steps[-1]['mag']
     os.chdir('..')
 
+    test_type_list, strain_list, delta_list = rmd_e.get_test_type_strain_delta_list(cryst_sys)
     for test_type, strain, delta in \
-                zip(*rmd_e.get_test_type_strain_delta_list(cryst_sys)):
+                zip(test_type_list, strain_list, delta_list):
+
+        # skip the strain correspoinding to bulk modulus and use the value from properties.json
+        # if test_type == 'c11+2c12':
+            # continue
+
         rmd.chdir(test_type)
         energy = np.zeros(len(delta))
         energy[0] = energy_nostrain
@@ -100,7 +105,6 @@ if __name__ == '__main__':
 
         fitting_results = pydass_vasp.fitting.curve_fit(rmd_e.central_poly, delta, energy, save_figs=True,
                     output_prefix=test_type)
-        combined_econst_array.append(fitting_results['params'][0])
         fitting_results['params'] = fitting_results['params'].tolist()
         fitting_results.pop('fitted_data')
         fitting_results['delta'] = delta.tolist()
@@ -113,6 +117,9 @@ if __name__ == '__main__':
         shutil.copy(test_type + '.pdf', '..')
         os.chdir('..')
 
+    # fitting_results_summary['c11+2c12'] = {}
+    # fitting_results_summary['c11+2c12']['params'] = [properties['B0'] * structure.volume / 160.2 * 9/2.]
+    combined_econst_array = [fitting_results_summary[test_type]['params'][0] for test_type in test_type_list]
     combined_econst_array = np.array(combined_econst_array) * 160.2 / structure.volume
     solved = rmd_e.solve(cryst_sys, combined_econst_array)
     rmd.filedump(solved, 'elastic.json')

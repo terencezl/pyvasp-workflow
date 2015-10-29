@@ -14,6 +14,7 @@ if __name__ == '__main__':
     You should set a 'phonopy' tag in the specs file like
 
         phonopy:
+          mode: force_set (or force_constant)
           dim: [2, 2, 2]
           mp: [31, 31, 31]
           tmax: 1400
@@ -47,22 +48,39 @@ if __name__ == '__main__':
 
     kpoints = rmd.read_kpoints(run_specs, structure)
 
-    structure.to(filename='POSCAR')
-    call('phonopy -d --dim="' + phonopy_dim + '" > /dev/null', shell=True)
-    os.remove('SPOSCAR')
-    disp_structures = sorted(glob.glob('POSCAR-*'))
-    disp_dirs = ['disp-' + i.split('POSCAR-')[1] for i in disp_structures]
-
-    for disp_d, disp_p in zip(disp_dirs, disp_structures):
-        rmd.chdir(disp_d)
+    if run_specs['phonopy']['mode'] == 'force_set':
+        structure.to(filename='POSCAR')
+        call('phonopy -d --dim="' + phonopy_dim + '" > /dev/null', shell=True)
+        os.remove('SPOSCAR')
+        disp_structures = sorted(glob.glob('POSCAR-*'))
+        disp_dirs = ['disp-' + i.split('POSCAR-')[1] for i in disp_structures]
+        for disp_d, disp_p in zip(disp_dirs, disp_structures):
+            rmd.chdir(disp_d)
+            rmd.init_stdout()
+            shutil.move('../' + disp_p, 'POSCAR')
+            incar.write_file('INCAR')
+            kpoints.write_file('KPOINTS')
+            rmd.write_potcar(run_specs)
+            job = disp_d
+            shutil.copy(cwd + '/INPUT/deploy.job', job)
+            call('sed -i "/python/c time ' + rmd.VASP_EXEC + ' 2>&1 | tee -a stdout" ' + job, shell=True)
+            call('M ' + job, shell=True)
+            os.remove(job)
+            os.chdir('..')
+    elif run_specs['phonopy']['mode'] == 'force_constant':
         rmd.init_stdout()
-        shutil.move('../' + disp_p, 'POSCAR')
         incar.write_file('INCAR')
         kpoints.write_file('KPOINTS')
+        structure.to(filename='POSCAR')
+        call('phonopy -d --dim="' + phonopy_dim + '" > /dev/null', shell=True)
+        os.rename('POSCAR', 'POSCAR_orig')
+        os.rename('SPOSCAR', 'POSCAR')
+        os.remove('disp.yaml')
+        for f in glob.glob('POSCAR-*'):
+            os.remove(f)
         rmd.write_potcar(run_specs)
-        job = disp_d
+        job = 'run_phonopy_fc'
         shutil.copy(cwd + '/INPUT/deploy.job', job)
         call('sed -i "/python/c time ' + rmd.VASP_EXEC + ' 2>&1 | tee -a stdout" ' + job, shell=True)
         call('M ' + job, shell=True)
         os.remove(job)
-        os.chdir('..')

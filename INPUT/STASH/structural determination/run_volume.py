@@ -162,6 +162,9 @@ if __name__ == '__main__':
     # equilibrium volume run
     structure.scale_lattice(V0)
     structure.to(filename='POSCAR')
+    incar.write_file('INCAR')
+    kpoints.write_file('KPOINTS')
+    rmd.write_potcar(run_specs)
     rmd.run_vasp()
     oszicar = mg.io.vasp.Oszicar('OSZICAR')
     E0 = oszicar.final_energy

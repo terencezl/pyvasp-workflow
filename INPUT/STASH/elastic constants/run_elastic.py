@@ -5,6 +5,7 @@ import run_module as rmd
 import run_module_elastic as rmd_e
 import pymatgen as mg
 import pydass_vasp
+import matplotlib.pyplot as plt
 
 
 if __name__ == '__main__':
@@ -103,10 +104,12 @@ if __name__ == '__main__':
                 mag[ind+1] = oszicar.ionic_steps[-1]['mag']
             os.chdir('..')
 
-        fitting_results = pydass_vasp.fitting.curve_fit(rmd_e.central_poly, delta, energy, save_figs=True,
-                    output_prefix=test_type)
+        fitting_results = pydass_vasp.fitting.curve_fit(rmd_e.central_poly, delta, energy, plot=True)
+        plt.savefig(test_type + '.pdf')
+        plt.close()
         fitting_results['params'] = fitting_results['params'].tolist()
         fitting_results.pop('fitted_data')
+        fitting_results.pop('ax')
         fitting_results['delta'] = delta.tolist()
         fitting_results['energy'] = energy.tolist()
         fitting_results['mag'] = mag.tolist()

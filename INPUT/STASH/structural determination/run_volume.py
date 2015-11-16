@@ -20,8 +20,6 @@ def volume_fitting(structure, is_mag, fitting_results):
     mag = np.zeros(len(volume))
     structures = []
     for i, V in enumerate(volume):
-        if not is_rerun:
-            rmd.chdir(str(np.round(V, 2)))
         incar.write_file('INCAR')
         kpoints.write_file('KPOINTS')
         structure.scale_lattice(V)
@@ -34,8 +32,6 @@ def volume_fitting(structure, is_mag, fitting_results):
         structures.append(structure.as_dict())
         if is_mag:
             mag[i] = oszicar.ionic_steps[-1]['mag']
-        if not is_rerun:
-            os.chdir('..')
 
     # dump in case error in fitting
     fitting_results.append({'volume': volume.tolist(), 'energy': energy.tolist(), 'mag': mag.tolist(), 'structures': structures})
@@ -50,7 +46,7 @@ def volume_fitting(structure, is_mag, fitting_results):
     plt.savefig('eos_fit.pdf')
     plt.close()
     params = fitting_result_raw['params']
-    fitting_results[-1]['pressure'] = pv.fitting.fitting.B_M_eqn_pv(volume,
+    fitting_results[-1]['pressure'] = pv.fitting.birch_murnaghan_p(volume,
         params['V0'], params['B0'],
         params['B0_prime']).tolist()
     fitting_results[-1]['params'] = params
@@ -83,8 +79,7 @@ if __name__ == '__main__':
 
     Optionally, with the tag 'rerun' set to True, if the "goodness" (see the
     actual code) is not reached, reconstruct the volume range and rerun till the
-    fit is "good". In this case, subdirectories with names being volume values
-    will not be created to avoid cluttering.
+    fit is "good".
 
     Optionally, you can set a 'volume' tag in the specs file like
 
@@ -93,11 +88,25 @@ if __name__ == '__main__':
           end:   25
           sample_point_num: 5
 
-    If 'volume' does not exist, a ../properties.json file is attempted and if it
-    exists, it should contain a 'V0' field, the volume range is constructed with
-    5 points between 0.9 * V0 and 1.1 * V0. If this file doesn't exsit, the
-    volume of the structure returned by rmd.get_structure() is used to do the
-    same construction.
+    If 'volume' or 'pressure' does not exist, a ../properties.json file is
+    attempted and if it exists, it should contain a 'V0' field, the volume range
+    is constructed with 5 points between 0.9 * V0 and 1.1 * V0. If this file
+    doesn't exsit, the volume of the structure returned by rmd.get_structure()
+    is used to do the same construction.
+
+    Optionally, you can set a 'pressure' tag in the specs file like
+
+        pressure:
+          skip_test_run: True
+          begin: -1
+          end:   50
+          sample_point_num: 5
+
+    In this case, an intial run will take action and obtain the fitting
+    parameters and find the correct volumes corresponding to the given pressure
+    range. A second run is done using those volume values. the tag
+    'skip_test_run' tells the code to just use the fitting_params.json in the
+    working directory without doing the test run.
 
     """
 
@@ -147,17 +156,35 @@ if __name__ == '__main__':
         V_end = V0 * 11./10
         V_sample_point_num = 5
 
-    is_rerun = True if 'rerun' in run_specs and run_specs['rerun'] else False
     fitting_results = []
-    # first round
-    is_well_fitted, V0, structure, is_mag = volume_fitting(structure, is_mag, fitting_results)
 
-    # possible next rounds
-    if is_rerun:
+    if not ('pressure' in run_specs and 'skip_test_run' in run_specs['pressure'] and \
+            run_specs['pressure']['skip_test_run']):
+        # first round
+        is_well_fitted, V0, structure, is_mag = volume_fitting(structure, is_mag, fitting_results)
+
+    if 'rerun' in run_specs and run_specs['rerun']:
+        # possible next rounds
         while not is_well_fitted:
             V_begin = V0 * 9./10
             V_end = V0 * 11./10
             is_well_fitted, V0, structure, is_mag = volume_fitting(structure, is_mag, fitting_results)
+
+    # pressure runs
+    if 'pressure' in run_specs and run_specs['pressure']:
+        pressure_params = run_specs['pressure']
+        p_begin = pressure_params['begin']
+        p_end = pressure_params['end']
+        V_sample_point_num = pressure_params['sample_point_num']
+        params = rmd.fileload('fitting_params.json')
+        from scipy import optimize
+        def pressure_func(V):
+            return pv.fitting.vinet_p(V, params['V0'], params['B0'], params['B0_prime']) - p0
+        V_list = []
+        for p0 in [p_begin, p_end]:
+            V_list.append(optimize.fsolve(pressure_func, structure.volume)[0])
+        V_begin, V_end = V_list
+        is_well_fitted, V0, structure, is_mag = volume_fitting(structure, is_mag, fitting_results)
 
     # equilibrium volume run
     structure.scale_lattice(V0)

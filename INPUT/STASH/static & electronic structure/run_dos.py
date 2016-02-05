@@ -8,14 +8,16 @@ if __name__ == '__main__':
 
     Obtain the density of states by the non-self-consistent method.
 
-    You should set a 'bs' tag in the specs file, like
+    You should set a 'dos' tag in the specs file, like
 
         dos:
           incar:
+            ISMEAR: -5
             ICHARG: 11
             NEDOS: 3001
             LORBIT: 10
           kpoints:
+            mode: M
             divisions: [10, 10, 10]
 
     """

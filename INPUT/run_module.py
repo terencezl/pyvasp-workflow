@@ -1,6 +1,7 @@
 import os
 import sys
 import argparse
+import warning
 import shutil
 from subprocess import call
 import re
@@ -93,9 +94,9 @@ def get_run_dir(run_specs):
 
     If 'run_dir' is in the specs file, use that.
 
-    Otherwise, use a naming scheme that combines 'structure' and 'elem_types'.
-    If either 'run_supdir' or 'run_subdir' exist, wrap up this naming scheme
-    with them.
+    Otherwise, use a naming scheme that combines 'structure' and 'elem_types',
+    like rocksalt-Ti_sv+N. If either 'run_supdir' or 'run_subdir' exist, wrap up
+    this naming scheme with them. Not recommended.
 
     If none of the two exists, name it 'vasp_test'.
 
@@ -116,12 +117,7 @@ def get_run_dir(run_specs):
 
 
 def enter_main_dir(run_specs):
-    """
-
-    Enter the run directory.
-
-    """
-
+    warnings.warn("Please use get_run_dir() instead.", DeprecationWarning)
     chdir(get_run_dir(run_specs))
 
 
@@ -132,7 +128,7 @@ def init_stdout():
 
     """
 
-    stdout_str = 'stdout_' + datetime.datetime.now().isoformat(sep='-') + '.out'
+    # stdout_str = 'stdout_' + datetime.datetime.now().isoformat(sep='-') + '.out'
     call('echo "Working directory: $PWD" | tee stdout', shell=True)
 
 
@@ -207,8 +203,12 @@ def read_kpoints(run_specs, structure=None):
 def get_structure(run_specs):
     """
 
-    Get pymatgen.Structure. There are many ways to get a structure. They
-    are all specified under 'poscar' in the specs file.
+    Get pymatgen.Structure. There are many ways to get a structure. They are all
+    specified under 'poscar' tag in the specs file. There are two ways to get a
+    structure.
+
+    1. From an already made structure, either from a template POSCAR, or a
+    Materials Project database entry. (Recommended)
 
     If 'template' is present in 'poscar', you can either set the
     VASP_TEMPLATES_DIR environmental variable, or just leave it to the default
@@ -224,31 +224,30 @@ def get_structure(run_specs):
         ['primitive', 'reduced', 'sorted', 'conventional_standard',
          'primitive_standard', 'refined']
 
-    For 'primitive', 'conventional_standard' and on, an additional tag 'prec'
+    For 'primitive', 'conventional_standard' and so on, an additional tag 'prec'
     controls the tolerence/symmetry finding precision threshold.
 
     The 'primitive', 'reduced' and 'sorted' are methods of the object
     pmg.Structure, while the rest are methods of
-    pmg.symmetry.analyzer.SpacegroupAnalyzer. Please refer to the actual code to
-    see what they are exactly. Be careful, because from 'sorted' and on, the
-    methods sort the sequence of elements to a standard (electronegativity), so
-    the elements you provide in 'elem_types' could have a chance of not aligning
-    with the ones in the structure. When in doubt, always manually run the
-    pymatgen commands and see the outcome structure.
+    pmg.symmetry.analyzer.SpacegroupAnalyzer. Please refer to the pymatgen docs
+    to see what they are exactly. Be careful about whether the resultent
+    structure is what you want. When in doubt, always manually run the pymatgen
+    commands and see the outcome.
 
-    For the above two ways, by default, the element types in the structure will
-    be replaced according to 'elem_types' in the specs file, but you have to
-    make sure the element type sequences of the structure and 'elem_types' are
-    right. If on the other hand, you want to skip specifying 'elem_types' and
-    simply use the element types in the structure, set
-    'use_structure_elem_types' to True, and 'elem_types' will be ignored even
-    provided.
+    By default, the code uses the element types written in the structure to
+    generate the POTCAR. However, if you set 'repl_elems' in 'poscar' with a
+    dict, like {N: C, Ti: Ti_sv}, the elements in the structure will be
+    accordingly replaced and POTCAR is generated with the flavored potentials.
+
+    Setting 'elem_types' in the specs file as a list of potentials (can have
+    flavors like Ti_sv) in the same sequence as in the structure also works, but
+    one has to be careful to match the sequence correctly. Not recommended.
 
     An optional 'volume' can be set to scale the structure of the template.
 
+    2. From manual description. (Cumbersome)
 
-    If neither of the above is present, the manual generation from spacegroup
-    is done by specifying
+    The manual generation from spacegroup is done by specifying
 
     'spacegroup' (international number or symbol)
 
@@ -257,85 +256,98 @@ def get_structure(run_specs):
     'lattice_params' ('a', 'b', 'c', 'alpha', 'beta', 'gamma', some of which
     'can be omitted because of a more symmetric crystallographic system)
 
+    'elem_types' (the elements in the structure, which can be flavored
+    'potentials, e.g. Ti_sv)
+
     'atoms_multitude' (multitude of atoms of the same element type in a list,
-    'the order following 'elem_types'. Only symmetrically distinct species and
+    'the sequence following 'elem_types'. Only symmetrically distinct species and
     'coords should be provided, according to the Wychoff positions)
 
     'atoms_direct_coords' (direct locations, relative to the lattice vectors
     'of the symmetrically distinct atoms. There should be the same number of
     'them as the sum of atoms_multitude)
 
-    Yeah, it's cumbersome. So why don't you just use the first two easier ways?
-
     """
 
     is_template = None
     is_material_id = None
-    poscar_spec = run_specs['poscar']
-    elem_types_struct = [re.sub(r'_.*', '', i) for i in run_specs['elem_types']]
-    if 'template' in poscar_spec:
+    poscar_specs = run_specs['poscar']
+
+    if 'template' in poscar_specs:
         is_template = True
-        poscar = mg.io.vasp.Poscar.from_file(os.path.join(VASP_TEMPLATES_DIR, poscar_spec['template']))
+        poscar = mg.io.vasp.Poscar.from_file(os.path.join(VASP_TEMPLATES_DIR, poscar_specs['template']))
         structure = poscar.structure
-    elif 'material_id' in poscar_spec:
+    elif 'material_id' in poscar_specs:
         is_material_id = True
         m = mg.MPRester()
-        structure = m.get_structure_by_material_id(poscar_spec['material_id'])
-    if 'get_structure' in poscar_spec:
-        prec = poscar_spec['prec'] if 'prec' in poscar_spec else 0.01
-        sga = mg.symmetry.analyzer.SpacegroupAnalyzer(structure, symprec=prec)
-        if poscar_spec['get_structure'] == 'sorted':
-            structure = structure.get_sorted_structure()
-        if poscar_spec['get_structure'] == 'reduced':
-            structure = structure.get_reduced_structure()
-        elif poscar_spec['get_structure'] == 'primitive':
-            structure = structure.get_primitive_structure(prec)
-        elif poscar_spec['get_structure'] == 'primitive_standard':
-            structure = sga.get_primitive_standard_structure()
-        elif poscar_spec['get_structure'] == 'conventional_standard':
-            structure = sga.get_conventional_standard_structure()
-        elif poscar_spec['get_structure'] == 'refined':
-            structure = sga.get_refined_structure()
-
+        structure = m.get_structure_by_material_id(poscar_specs['material_id'])
     if is_template or is_material_id:
-        if 'use_structure_elem_types' in poscar_spec and poscar_spec['use_structure_elem_types']:
-            run_specs['elem_types'] = list(structure.symbol_set)
+        if 'get_structure' in poscar_specs:
+            prec = poscar_specs['prec'] if 'prec' in poscar_specs else 0.01
+            sga = mg.symmetry.analyzer.SpacegroupAnalyzer(structure, symprec=prec)
+            if poscar_specs['get_structure'] == 'sorted':
+                structure = structure.get_sorted_structure()
+            if poscar_specs['get_structure'] == 'reduced':
+                structure = structure.get_reduced_structure()
+            elif poscar_specs['get_structure'] == 'primitive':
+                structure = structure.get_primitive_structure(prec)
+            elif poscar_specs['get_structure'] == 'primitive_standard':
+                structure = sga.get_primitive_standard_structure()
+            elif poscar_specs['get_structure'] == 'conventional_standard':
+                structure = sga.get_conventional_standard_structure()
+            elif poscar_specs['get_structure'] == 'refined':
+                structure = sga.get_refined_structure()
+
+        if 'elem_types' not in run_specs:
+            symbol_set = list(structure.symbol_set)
+            if 'repl_elems' in poscar_specs:
+                for idx, symbol in enumerate(symbol_set):
+                    if symbol in poscar_specs['repl_elems']:
+                        symbol_set[idx] = poscar_specs['repl_elems'][symbol]
+            repl_elems_struct = {key: re.sub(r'_.*', '', value) for key, value in poscar_specs['repl_elems'].enumerate()}
+            structure.replace_species(repl_elems_struct)
+            run_specs['elem_types'] = symbol_set
         else:
+            # deprecated
+            elem_types_struct = [re.sub(r'_.*', '', i) for i in run_specs['elem_types']]
             for i, item in enumerate(structure.symbol_set):
                 structure.replace_species({item: elem_types_struct[i]})
-        if 'volume' in poscar_spec:
-            structure.scale_lattice(run_specs['poscar']['volume'])
+
+        if 'volume' in poscar_specs:
+            structure.scale_lattice(poscar_specs['volume'])
         return structure
-
-    cryst_sys = poscar_spec['cryst_sys']
-    lattice_params = poscar_spec['lattice_params']
-    if cryst_sys == 'cubic':
-        lattice = mg.Lattice.cubic(lattice_params['a'])
-    elif cryst_sys == 'hexagonal':
-        lattice = mg.Lattice.hexagonal(lattice_params['a'], lattice_params['alpha'])
-    elif cryst_sys == 'tetragonal':
-        lattice = mg.Lattice.tetragonal(lattice_params['a'], lattice_params['c'])
-    elif cryst_sys == 'orthorhombic':
-        lattice = mg.Lattice.orthorhombic(lattice_params['a'], lattice_params['b'], lattice_params['c'])
-    elif cryst_sys == 'rhombohedral':
-        lattice = mg.Lattice.rhombohedral(lattice_params['a'], lattice_params['alpha'])
-    elif cryst_sys == 'monoclinic':
-        lattice = mg.Lattice.orthorhombic(lattice_params['a'], lattice_params['b'], lattice_params['c'],
-            lattice_params['beta'])
     else:
-        lattice = mg.Lattice.orthorhombic(lattice_params['a'], lattice_params['b'], lattice_params['c'],
-            lattice_params['alpha'], lattice_params['beta'], lattice_params['gamma'])
+        cryst_sys = poscar_specs['cryst_sys']
+        lattice_params = poscar_specs['lattice_params']
+        if cryst_sys == 'cubic':
+            lattice = mg.Lattice.cubic(lattice_params['a'])
+        elif cryst_sys == 'hexagonal':
+            lattice = mg.Lattice.hexagonal(lattice_params['a'], lattice_params['alpha'])
+        elif cryst_sys == 'tetragonal':
+            lattice = mg.Lattice.tetragonal(lattice_params['a'], lattice_params['c'])
+        elif cryst_sys == 'orthorhombic':
+            lattice = mg.Lattice.orthorhombic(lattice_params['a'], lattice_params['b'], lattice_params['c'])
+        elif cryst_sys == 'rhombohedral':
+            lattice = mg.Lattice.rhombohedral(lattice_params['a'], lattice_params['alpha'])
+        elif cryst_sys == 'monoclinic':
+            lattice = mg.Lattice.orthorhombic(lattice_params['a'], lattice_params['b'], lattice_params['c'],
+                lattice_params['beta'])
+        else:
+            lattice = mg.Lattice.orthorhombic(lattice_params['a'], lattice_params['b'], lattice_params['c'],
+                lattice_params['alpha'], lattice_params['beta'], lattice_params['gamma'])
 
-    elem_types_struct_multi = []
-    for i, elem in enumerate(elem_types_struct):
-        elem_types_struct_multi.extend([elem] * poscar_spec['atoms_multitude'][i])
+        elem_types_struct = [re.sub(r'_.*', '', i) for i in poscar_specs['elem_types']]
+        elem_types_struct_multi = []
+        for i, elem in enumerate(elem_types_struct):
+            elem_types_struct_multi.extend([elem] * poscar_specs['atoms_multitude'][i])
 
-    structure = mg.Structure.from_spacegroup(poscar_spec['spacegroup'], lattice,
-            elem_types_struct_multi, poscar_spec['atoms_direct_coords'])
-    return structure
+        structure = mg.Structure.from_spacegroup(poscar_specs['spacegroup'], lattice,
+                elem_types_struct_multi, poscar_specs['atoms_direct_coords'])
+        return structure
 
 
 def generate_structure(run_specs):
+    warnings.warn("Please use get_structure() instead.", DeprecationWarning)
     return get_structure(run_specs)
 
 

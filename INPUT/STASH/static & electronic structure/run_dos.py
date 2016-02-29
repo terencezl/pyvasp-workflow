@@ -1,6 +1,7 @@
 import os
 import run_module as rmd
 import pymatgen as mg
+import pymatgen.electronic_structure.plotter
 
 
 if __name__ == '__main__':
@@ -63,5 +64,5 @@ if __name__ == '__main__':
     vasprun = mg.io.vasp.Vasprun('vasprun.xml')
     dos = vasprun.tdos
     dosp = mg.electronic_structure.plotter.DosPlotter()
-    dosp.add_dos(dos)
-    dosp.save_plot('DOS.pdf', 'pdf')
+    dosp.add_dos('total', dos)
+    dosp.save_plot('TDOS.pdf', 'pdf')

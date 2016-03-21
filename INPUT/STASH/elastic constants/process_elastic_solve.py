@@ -35,6 +35,7 @@ if __name__ == '__main__':
         structure = rmd.get_structure(run_specs)
     elif os.path.isfile('../POSCAR'):
         structure = mg.Structure.from_file('../POSCAR')
+        rmd.insert_elem_types(run_specs, structure)
 
     test_type_list, strain_list, delta_list = rmd_e.get_test_type_strain_delta_list(cryst_sys)
     fitting_results_summary = rmd.fileload('fitting_results.json')

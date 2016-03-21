@@ -73,14 +73,13 @@ if __name__ == '__main__':
     rmd.init_stdout()
 
     # read settings
-    # POTCAR dump
-    rmd.write_potcar(run_specs)
 
     # POSCAR
     if 'poscar' in run_specs:
         structure = rmd.get_structure(run_specs)
     elif os.path.isfile('../POSCAR'):
         structure = mg.Structure.from_file('../POSCAR')
+        rmd.insert_elem_types(run_specs, structure)
 
     # INCAR
     incar = rmd.read_incar(run_specs)
@@ -91,6 +90,9 @@ if __name__ == '__main__':
                 incar.update({'ISPIN': 2})
             else:
                 incar.update({'ISPIN': 1})
+
+    # POTCAR dump
+    rmd.write_potcar(run_specs)
 
     potcars = mg.io.vasp.Potcar.from_file('POTCAR')
     incar['ENCUT'] = rmd.get_max_ENMAX(potcars)
@@ -110,4 +112,4 @@ if __name__ == '__main__':
     shutil.copy(os.path.join(start_dir, 'INPUT/lobsterin'), 'lobsterin')
     with open('lobsterin', 'a') as f:
         f.write(basisfunctions_str)
-    call('lobster-1.2.0 | tee -a stdout', shell=True)
+    call('lobster-2.0.0 | tee -a stdout', shell=True)

@@ -41,6 +41,7 @@ if __name__ == '__main__':
         structure = rmd.get_structure(run_specs)
     elif os.path.isfile('../POSCAR'):
         structure = mg.Structure.from_file('../POSCAR')
+        rmd.insert_elem_types(run_specs, structure)
 
     kpoints.style = run_specs['kpoints_test']['mode']
     kpoints_params = run_specs['kpoints_test']['kpoints_change']

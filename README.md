@@ -23,8 +23,8 @@ In the directory root, you'll see a directory called `INPUT/`, which contains a 
 
 1. a routine description file, ending with `.py`
 2. a specs file, ending with `.yaml`, which will be parsed by the routine `.py` file
-3. a job script, according to your supercomputer's setup. Here it's named `deploy.job`
-4. a deploy trigger file `deploy.py`, which submits the job script of the routine to the queue
+3. a job script `deploy.job`, according to your supercomputer's setup
+4. a deploy trigger file `deploy`, which submits the job script of the routine to the queue
 
 To avoid cluttering of irrelevant files, under `INPUT/` there is only one set of `.py` and `.yaml` files. You'll need more as you define you own routines. For a bunch of examples, go to `STASH/`.
 
@@ -57,7 +57,7 @@ I assume your supercomputer is using a queueing system to manage multi-users, wh
 
 4. Alter the `deploy.job` script. Note that this is supercomputer queueing system dependent. As an example, look at the included `deploy.job`, meant but not limited for the [PBS](https://en.wikipedia.org/wiki/Portable_Batch_System) queueing system.
 
-  You have to be familiar with its syntax, and able to do some replacements with the command line tool `sed`. **In particular, you should create a script called `M`, make it executable and add it in your `$PATH`. **This way, the deploy trigger file `deploy.py` can use it to change the job name, stdout and stderr file path, etc., and then submit it (see `deploy.py` if interested).
+  You have to be familiar with its syntax, and able to do some replacements with the command line tool `sed`. **In particular, you should create a script called `M`, make it executable and add it in your `$PATH`. **This way, the deploy trigger file `deploy` can use it to change the job name, stdout and stderr file path, etc., and then submit it (see `deploy` if interested).
    
    As an example, for PBS, the `M` file is simple. Use it with the included `deploy.job` file.
    
@@ -82,9 +82,9 @@ I assume your supercomputer is using a queueing system to manage multi-users, wh
 5. Go back one directory to the directory root, looking at `INPUT/`, and type in
 
    ```bash
-   INPUT/deploy.py INPUT/run_test
+   INPUT/deploy INPUT/run_test.py
    # if you create INPUT/run_test_2.yaml
-   INPUT/deploy.py INPUT/run_test INPUT/run_test_2.yaml
+   INPUT/deploy INPUT/run_test.py INPUT/run_test_2.yaml
    ```
 
 **Now, if your supercomputer doesn't have a queueing system, or you are already in an interactive session, skip 4 and 5, just**

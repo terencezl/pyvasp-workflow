@@ -1,0 +1,36 @@
+#!/bin/env python
+import os
+import shutil
+import subprocess
+import argparse
+import datetime
+from run_module import fileload, filedump, get_run_dir
+
+parser = argparse.ArgumentParser(description='Copy the specs file from INPUT/ and submit multiple jobs to the queue.')
+parser.add_argument('routine', help='path of the Python routine file')
+parser.add_argument('specs', nargs='?', help='path of the yaml specs file. If not given, use the same name as the routine script.')
+parser.add_argument('-w', help='walltime, default to whatever written in the job script')
+args = parser.parse_args()
+
+if args.specs:
+    specs = args.specs
+else:
+    specs = args.routine.split('.py')[0] + '.yaml'
+
+for i in ['1.0', '0.5']:
+    suffix = datetime.datetime.now().isoformat(sep='-')
+    specs_basename_suffixed = os.path.basename(specs).split('.yaml')[0] + '-' + str(i) + '_' + suffix + '.yaml'
+
+    run_specs = fileload(specs)
+    # suffix the run directory and changing parameter
+    run_specs['run_dir'] += '-' + i
+    run_specs['poscar']['template'] += '-' + i
+    filedump(run_specs, specs_basename_suffixed)
+    job = get_run_dir(run_specs).replace('/', '-') + '.job'
+    shutil.copy('INPUT/deploy.job', job)
+    subprocess.call(' '.join(['sed -i "/python/c python', args.routine, specs_basename_suffixed, '--remove_file"', job]), shell=True)
+    if args.w:
+        subprocess.call(' '.join(['M -w', args.w, job]), shell=True)
+    else:
+        subprocess.call('M ' + job, shell=True)
+    os.remove(job)

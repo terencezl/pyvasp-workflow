@@ -61,6 +61,7 @@ if __name__ == '__main__':
         structure = rmd.get_structure(run_specs)
     elif os.path.isfile('../POSCAR'):
         structure = mg.Structure.from_file('../POSCAR')
+        rmd.insert_elem_types(run_specs, structure)
 
     kpoints = rmd.read_kpoints(run_specs, structure)
 
@@ -81,7 +82,7 @@ if __name__ == '__main__':
                 rmd.write_potcar(run_specs)
                 job = test_type + '-' + str(value)
                 shutil.copy(cwd + '/INPUT/deploy.job', job)
-                call('sed -i "/python/c time ' + VASP_EXEC + ' 2>&1 | tee -a stdout" ' + job, shell=True)
+                call('sed -i "/python/c time ' + rmd.VASP_EXEC + ' 2>&1 | tee -a stdout" ' + job, shell=True)
                 call('M ' + job, shell=True)
                 os.remove(job)
                 os.chdir('..')

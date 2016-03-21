@@ -1,7 +1,7 @@
 import os
 import sys
 import argparse
-import warning
+import warnings
 import shutil
 from subprocess import call
 import re
@@ -200,6 +200,34 @@ def read_kpoints(run_specs, structure=None):
     return kpoints
 
 
+def insert_elem_types(run_specs, structure):
+    """
+
+    The 'elem_types' tag is needed in the run_specs dict to generate the correct
+    POTCAR. However, in the newer way of doing things, directly supplying
+    'elem_types' is not recommended. Instead, it will be inferred from the
+    structure, and the 'repl_elems' tag.
+
+    So if you wish to use Ti_sv instead of Ti in the structure, set 'repl_elems'
+    as {Ti: Ti_sv} and call this function.
+
+    Note, if you use the 'poscar' tag in the specs file, the get_structure()
+    function will automatically take care of that. So use it only if you get a
+    structure from some other means.
+
+    """
+
+    symbol_set = list(structure.symbol_set)
+    if 'repl_elems' in run_specs:
+        for idx, symbol in enumerate(symbol_set):
+            if symbol in run_specs['repl_elems']:
+                symbol_set[idx] = run_specs['repl_elems'][symbol]
+        repl_elems_struct = {key: re.sub(r'_.*', '', value) for key, value in run_specs['repl_elems'].items()}
+        structure.replace_species(repl_elems_struct)
+    if 'elem_types' not in run_specs:
+        run_specs['elem_types'] = symbol_set
+
+
 def get_structure(run_specs):
     """
 
@@ -235,9 +263,10 @@ def get_structure(run_specs):
     commands and see the outcome.
 
     By default, the code uses the element types written in the structure to
-    generate the POTCAR. However, if you set 'repl_elems' in 'poscar' with a
-    dict, like {N: C, Ti: Ti_sv}, the elements in the structure will be
-    accordingly replaced and POTCAR is generated with the flavored potentials.
+    generate the POTCAR by maintaining the existence of 'elem_types'. However,
+    if you set 'repl_elems' with a dict, like {N: C, Ti: Ti_sv}, the elements in
+    the structure will be accordingly replaced and the necessary mechanism is in
+    place to make sure POTCAR is to be generated with the flavored potentials.
 
     Setting 'elem_types' in the specs file as a list of potentials (can have
     flavors like Ti_sv) in the same sequence as in the structure also works, but
@@ -299,14 +328,7 @@ def get_structure(run_specs):
                 structure = sga.get_refined_structure()
 
         if 'elem_types' not in run_specs:
-            symbol_set = list(structure.symbol_set)
-            if 'repl_elems' in poscar_specs:
-                for idx, symbol in enumerate(symbol_set):
-                    if symbol in poscar_specs['repl_elems']:
-                        symbol_set[idx] = poscar_specs['repl_elems'][symbol]
-            repl_elems_struct = {key: re.sub(r'_.*', '', value) for key, value in poscar_specs['repl_elems'].enumerate()}
-            structure.replace_species(repl_elems_struct)
-            run_specs['elem_types'] = symbol_set
+            insert_elem_types(run_specs, structure)
         else:
             # deprecated
             elem_types_struct = [re.sub(r'_.*', '', i) for i in run_specs['elem_types']]

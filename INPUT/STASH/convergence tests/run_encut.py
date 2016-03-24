@@ -10,11 +10,12 @@ if __name__ == '__main__':
 
     Run convergence test with changing energy cut-off values, and plot figures.
 
-    You should set a 'encut_change' tag in the specs file, like
+    You should set a 'encut_test' tag in the specs file, like
 
-        encut_change: [320, 330, 340, 350, 360, 370, 380, 390, 400]
+        encut_test:
+          change: [320, 330, 340, 350, 360, 370, 380, 390, 400]
         or
-        encut_change:
+        encut_test:
           begin: 300
           end: 500
           step: 10
@@ -45,14 +46,14 @@ if __name__ == '__main__':
 
     kpoints = rmd.read_kpoints(run_specs, structure)
 
-    encut_params = run_specs['encut_change']
-    if isinstance(encut_params, dict):
-        encut_change = np.array(range(encut_params['begin'], encut_params['end'], encut_params['step']))
-    elif isinstance(encut_params, list):
-        encut_change = np.array(encut_params)
-    energy = np.zeros(len(encut_change))
+    encut_specs = run_specs['encut_test']
+    if 'change' in encut_specs:
+        change = np.array(encut_specs['change'])
+    else:
+        change = np.array(range(encut_specs['begin'], encut_specs['end'], encut_specs['step']))
+    energy = np.zeros(len(change))
 
-    for i, encut in enumerate(encut_change):
+    for i, encut in enumerate(change):
         incar['ENCUT'] = encut
         incar.write_file('INCAR')
         kpoints.write_file('KPOINTS')
@@ -63,19 +64,19 @@ if __name__ == '__main__':
         energy[i] = oszicar.final_energy
 
     energy /= structure.num_sites
-    plt.plot(encut_change, energy, 'o')
+    plt.plot(change, energy, 'o')
     plt.xlabel('ENCUT (eV)')
     plt.ylabel('Energy (eV)')
     plt.tight_layout()
     plt.savefig('energy-encut.pdf')
     plt.close()
-    np.savetxt('energy-encut.txt', np.column_stack((encut_change, energy)), '%12.4f', header='encut energy')
+    np.savetxt('energy-encut.txt', np.column_stack((change, energy)), '%12.4f', header='encut energy')
 
     energy_relative = np.abs(np.diff(energy))
-    plt.plot(encut_change[1:], energy_relative, 'o')
+    plt.plot(change[1:], energy_relative, 'o')
     plt.xlabel('ENCUT (eV)')
     plt.ylabel('Energy (eV)')
     plt.tight_layout()
     plt.savefig('energy_relative-encut.pdf')
     plt.close()
-    np.savetxt('energy_relative-encut.txt', np.column_stack((encut_change[1:], energy_relative)), '%12.4f', header='encut energy_relative')
+    np.savetxt('energy_relative-encut.txt', np.column_stack((change[1:], energy_relative)), '%12.4f', header='encut energy_relative')

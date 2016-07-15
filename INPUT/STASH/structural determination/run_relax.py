@@ -47,20 +47,16 @@ if __name__ == '__main__':
     rmd.init_stdout()
 
     # read settings
+    rmd.infer_from_json(run_specs)
+    structure = rmd.get_structure(run_specs)
     incar = rmd.read_incar(run_specs)
-
-    if 'poscar' in run_specs:
-        structure = rmd.get_structure(run_specs)
-    elif os.path.isfile('CONTCAR'):
-        stack_oszicar()
-        structure = mg.Structure.from_file('CONTCAR')
-
     kpoints = rmd.read_kpoints(run_specs, structure)
+    stack_oszicar()
 
     # write input files and run vasp
+    structure.to(filename='POSCAR')
     incar.write_file('INCAR')
     kpoints.write_file('KPOINTS')
-    structure.to(filename='POSCAR')
     rmd.write_potcar(run_specs)
     rmd.run_vasp()
 

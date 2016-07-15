@@ -34,8 +34,9 @@ if __name__ == '__main__':
     rmd.init_stdout()
 
     # read settings
-    incar = rmd.read_incar(run_specs)
+    rmd.infer_from_json(run_specs)
     structure = rmd.get_structure(run_specs)
+    incar = rmd.read_incar(run_specs)
     kpoints = rmd.read_kpoints(run_specs, structure)
 
     # write input files

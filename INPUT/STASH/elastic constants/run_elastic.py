@@ -30,31 +30,13 @@ if __name__ == '__main__':
     rmd.filedump(run_specs, filename)
 
     cryst_sys = run_specs['elastic']['cryst_sys']
+
+    rmd.infer_from_json(run_specs)
+    structure = rmd.get_structure(run_specs)
     incar = rmd.read_incar(run_specs)
-    is_properties = None
-    if os.path.isfile(('../properties.json')):
-        is_properties = True
-        properties = rmd.fileload('../properties.json')
-
-    if 'ISPIN' in incar:
-        is_mag = incar['ISPIN'] == 2
-    elif is_properties:
-        is_mag = rmd.detect_is_mag(properties['mag'])
-        if is_mag:
-            incar.update({'ISPIN': 2})
-        else:
-            incar.update({'ISPIN': 1})
-    else:
-        is_mag = False
-
-    # higher priority for run_specs
-    if 'poscar' in run_specs:
-        structure = rmd.get_structure(run_specs)
-    elif os.path.isfile('../POSCAR'):
-        structure = mg.Structure.from_file('../POSCAR')
-        rmd.insert_elem_types(run_specs, structure)
-
     kpoints = rmd.read_kpoints(run_specs, structure)
+
+    is_mag = incar['ISPIN'] == 2 if 'ISPIN' in incar else False
 
     fitting_results_summary = {}
 
@@ -128,8 +110,7 @@ if __name__ == '__main__':
     solved = rmd_e.solve(cryst_sys, combined_econst_array)
     rmd.filedump(solved, 'elastic.json')
 
-    if is_properties:
-        # load again immediately before save
+    if os.path.isfile('../properties.json'):
         properties = rmd.fileload('../properties.json')
         properties['elastic'] = solved
         rmd.filedump(properties, '../properties.json')

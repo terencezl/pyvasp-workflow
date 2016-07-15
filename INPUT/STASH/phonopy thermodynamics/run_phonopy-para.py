@@ -31,22 +31,10 @@ if __name__ == '__main__':
     phonopy_mp = ' '.join(map(str, run_specs['phonopy']['mp']))
     phonopy_tmax = str(run_specs['phonopy']['tmax'])
     phonopy_tstep = str(run_specs['phonopy']['tstep'])
+
+    rmd.infer_from_json(run_specs)
+    structure = rmd.get_structure(run_specs)
     incar = rmd.read_incar(run_specs)
-    if os.path.isfile('../properties.json'):
-        properties = rmd.fileload('../properties.json')
-        if 'ISPIN' not in incar:
-            if rmd.detect_is_mag(properties['mag']):
-                incar.update({'ISPIN': 2})
-            else:
-                incar.update({'ISPIN': 1})
-
-    # higher priority for run_specs
-    if 'poscar' in run_specs:
-        structure = rmd.get_structure(run_specs)
-    elif os.path.isfile('../POSCAR'):
-        structure = mg.Structure.from_file('../POSCAR')
-        rmd.insert_elem_types(run_specs, structure)
-
     kpoints = rmd.read_kpoints(run_specs, structure)
 
     if run_specs['phonopy']['mode'] == 'force_set':

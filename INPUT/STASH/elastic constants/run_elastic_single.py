@@ -35,31 +35,13 @@ if __name__ == '__main__':
 
     cryst_sys = run_specs['elastic']['cryst_sys']
     test_type_input = run_specs['elastic']['test_type']
+
+    rmd.infer_from_json(run_specs)
+    structure = rmd.get_structure(run_specs)
     incar = rmd.read_incar(run_specs)
-    is_properties = None
-    if os.path.isfile(('../properties.json')):
-        is_properties = True
-        properties = rmd.fileload('../properties.json')
-
-    if 'ISPIN' in incar:
-        is_mag = incar['ISPIN'] == 2
-    elif is_properties:
-        is_mag = rmd.detect_is_mag(properties['mag'])
-        if is_mag:
-            incar.update({'ISPIN': 2})
-        else:
-            incar.update({'ISPIN': 1})
-    else:
-        is_mag = False
-
-    # higher priority for run_specs
-    if 'poscar' in run_specs:
-        structure = rmd.get_structure(run_specs)
-    elif os.path.isfile('../POSCAR'):
-        structure = mg.Structure.from_file('../POSCAR')
-        rmd.insert_elem_types(run_specs, structure)
-
     kpoints = rmd.read_kpoints(run_specs, structure)
+
+    is_mag = incar['ISPIN'] == 2 if 'ISPIN' in incar else False
 
     test_type_list, strain_list, delta_list = rmd_e.get_test_type_strain_delta_list(cryst_sys)
     for test_type, strain, delta in zip(test_type_list, strain_list, delta_list):

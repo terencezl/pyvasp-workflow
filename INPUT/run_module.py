@@ -150,6 +150,48 @@ def run_vasp():
     call('echo -e ' + hbreak + ' | tee -a stdout', shell=True)
 
 
+def detect_is_mag(mag, tol=1e-3):
+    """
+
+    Detect if any of a list/numpy array, or a float/int value of magnetic
+    moments is larger than some criterion (tol optional argument). Return the
+    boolean.
+
+    """
+
+    if isinstance(mag, list) or isinstance(mag, np.ndarray):
+        is_mag = (np.abs(mag) >= tol).any()
+    elif isinstance(mag, float) or isinstance(mag, int):
+        is_mag = np.abs(mag) >= tol
+    return is_mag
+
+
+def infer_from_json(run_specs):
+    """
+
+    Specify a relative path to the run_dir in the specs file, under the tag of
+    "infer_from_json".
+
+    Infer some information not given in the specs file from a specified json
+    file, if that file exists. Adjust run_specs.
+
+    e.g. If ISPIN is not specified in the yaml file, try the 'mag' key in the
+    json file.
+
+    """
+
+    if 'infer_from_json' in run_specs:
+        properties = fileload(run_specs['infer_from_json'])
+        incar = run_specs['incar']
+        if 'ISPIN' not in incar:
+            if detect_is_mag(properties['mag']):
+                incar.update({'ISPIN': 2})
+            else:
+                incar.update({'ISPIN': 1})
+
+        run_specs['poscar']['volume'] = properties['V0']
+
+
 def read_incar(run_specs):
     """
 
@@ -200,34 +242,6 @@ def read_kpoints(run_specs, structure=None):
     return kpoints
 
 
-def insert_elem_types(run_specs, structure):
-    """
-
-    The 'elem_types' tag is needed in the run_specs dict to generate the correct
-    POTCAR. However, in the newer way of doing things, directly supplying
-    'elem_types' is not recommended. Instead, it will be inferred from the
-    structure, and the 'repl_elems' tag.
-
-    So if you wish to use Ti_sv instead of Ti in the structure, set 'repl_elems'
-    as {Ti: Ti_sv} and call this function.
-
-    Note, if you use the 'poscar' tag in the specs file, the get_structure()
-    function will automatically take care of that. So use it only if you get a
-    structure from some other means.
-
-    """
-
-    symbol_set = list(structure.symbol_set)
-    if 'repl_elems' in run_specs:
-        for idx, symbol in enumerate(symbol_set):
-            if symbol in run_specs['repl_elems']:
-                symbol_set[idx] = run_specs['repl_elems'][symbol]
-        repl_elems_struct = {key: re.sub(r'_.*', '', value) for key, value in run_specs['repl_elems'].items()}
-        structure.replace_species(repl_elems_struct)
-    if 'elem_types' not in run_specs:
-        run_specs['elem_types'] = symbol_set
-
-
 def get_structure(run_specs):
     """
 
@@ -242,7 +256,8 @@ def get_structure(run_specs):
     VASP_TEMPLATES_DIR environmental variable, or just leave it to the default
     'INPUT/TEMPLATES'. After that, this specified POSCAR-type template file path
     will be used to obtain the structure from the VASP_TEMPLATES_DIR, and a
-    structure is returned.
+    structure is returned. If you set 'rel_to_run_dir' to True, 'template'
+    refers to the file relative to the 'run_dir'.
 
     If 'material_id' is present in 'poscar', MAPI_KEY environmental variable
     needs to be set according to the Materials Project (materialsproject.org).
@@ -304,7 +319,10 @@ def get_structure(run_specs):
 
     if 'template' in poscar_specs:
         is_template = True
-        poscar = mg.io.vasp.Poscar.from_file(os.path.join(VASP_TEMPLATES_DIR, poscar_specs['template']))
+        if 'rel_to_run_dir' in poscar_specs and poscar_specs['rel_to_run_dir']:
+            poscar = mg.io.vasp.Poscar.from_file(poscar_specs['template'])
+        else:
+            poscar = mg.io.vasp.Poscar.from_file(os.path.join(VASP_TEMPLATES_DIR, poscar_specs['template']))
         structure = poscar.structure
     elif 'material_id' in poscar_specs:
         is_material_id = True
@@ -328,7 +346,14 @@ def get_structure(run_specs):
                 structure = sga.get_refined_structure()
 
         if 'elem_types' not in run_specs:
-            insert_elem_types(run_specs, structure)
+            symbol_set = list(structure.symbol_set)
+            if 'repl_elems' in run_specs:
+                for idx, symbol in enumerate(symbol_set):
+                    if symbol in run_specs['repl_elems']:
+                        symbol_set[idx] = run_specs['repl_elems'][symbol]
+                repl_elems_struct = {key: re.sub(r'_.*', '', value) for key, value in run_specs['repl_elems'].items()}
+                structure.replace_species(repl_elems_struct)
+            run_specs['elem_types'] = symbol_set
         else:
             # deprecated
             elem_types_struct = [re.sub(r'_.*', '', i) for i in run_specs['elem_types']]
@@ -387,22 +412,6 @@ def write_potcar(run_specs):
         for filename in [os.path.join(potential_base, e, 'POTCAR') for e in run_specs['elem_types']]:
             with open(filename, 'rb') as infile:
                 shutil.copyfileobj(infile, outfile)
-
-
-def detect_is_mag(mag, tol=1e-3):
-    """
-
-    Detect if any of a list/numpy array, or a float/int value of magnetic
-    moments is larger than some criterion (tol optional argument). Return the
-    boolean.
-
-    """
-
-    if isinstance(mag, list) or isinstance(mag, np.ndarray):
-        is_mag = (np.abs(mag) >= tol).any()
-    elif isinstance(mag, float) or isinstance(mag, int):
-        is_mag = np.abs(mag) >= tol
-    return is_mag
 
 
 def get_max_ENMAX(potcars):

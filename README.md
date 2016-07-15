@@ -57,7 +57,7 @@ I assume your supercomputer is using a queueing system to manage multi-users, wh
 
 4. Alter the `deploy.job` script. Note that this is supercomputer queueing system dependent. As an example, look at the included `deploy.job`, meant but not limited for the [PBS](https://en.wikipedia.org/wiki/Portable_Batch_System) queueing system.
 
-  You have to be familiar with its syntax, and able to do some replacements with the command line tool `sed`. **In particular, you should create a script called `M`, make it executable and add it in your `$PATH`. **This way, the deploy trigger file `deploy` can use it to change the job name, stdout and stderr file path, etc., and then submit it (see `deploy` if interested).
+  You have to be familiar with its syntax, and able to do some replacements with the command line tool `sed`. **In particular, you should create a script called `M`, make it executable and add it in your `$PATH`.** This way, the deploy trigger file `deploy` can use it to change the job name, stdout and stderr file path, etc., and then submit it (see `deploy` if interested).
    
    As an example, for PBS, the `M` file is simple. Use it with the included `deploy.job` file.
    
@@ -82,32 +82,25 @@ I assume your supercomputer is using a queueing system to manage multi-users, wh
 5. Go back one directory to the directory root, looking at `INPUT/`, and type in
 
    ```bash
-   INPUT/deploy INPUT/run_test.py
-   # if you create INPUT/run_test_2.yaml
-   INPUT/deploy INPUT/run_test.py INPUT/run_test_2.yaml
+   INPUT/deploy INPUT/run_basic.py
+   # if you create INPUT/run_basic_2.yaml
+   INPUT/deploy INPUT/run_basic.py INPUT/run_basic_2.yaml
    ```
 
 **Now, if your supercomputer doesn't have a queueing system, or you are already in an interactive session, skip 4 and 5, just**
 
 ```bash
-python INPUT/run_test.py
-# or for the specs file INPUT/run_test_2.yaml
-python INPUT/run_test.py INPUT/run_test_2.yaml
+python INPUT/run_basic.py
+# or for the specs file INPUT/run_basic_2.yaml
+python INPUT/run_basic.py INPUT/run_basic_2.yaml
 ```
-
-Priority Rules
---------------
-
-There are a few priority rules implemented for most example routines regarding which value for a certain parameter to take, if there are more than one to choose from. This gives flexibility to the scripts by simply omitting setting some tags in th specs file. However, whatever you provide in the specs will be given precedence to.
-
-* For INCAR, if 'ISPIN' is not provided in the specs file under 'incar', a ../properties.json file is attempted and if it exists, it should contain a 'mag' field with the cell's magnetic moment. ISPIN value is set to 2 if mag is larger than 0.001.
-
-* For POSCAR, if 'poscar' is not provided in the specs file, a ../POSCAR is attempted.
 
 Dependencies
 ------------
 
 * NumPy
-* SciPy
-* matplotlib
+* pymatgen
+* SciPy (needed by some scripts)
+* matplotlib (needed by some scripts)
+* pandas (needed by some scripts)
 * pydass_vasp (https://github.com/terencezl/pydass_vasp) (needed by some scripts)

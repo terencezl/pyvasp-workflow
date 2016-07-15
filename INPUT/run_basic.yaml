@@ -1,0 +1,35 @@
+run_dir: vasp/run_basic
+pot_type: PAW_PBE
+incar:
+  ENCUT: 400
+  PREC: Normal
+  ISPIN: 1
+  ISMEAR: 0
+  SIGMA: 0.1
+  NSW: 20
+  IBRION: 2
+  ISIF: 3
+  POTIM: 0.2
+  EDIFFG: -0.01
+  KPAR: 2
+  LCHARG: False
+  LWAVE: False
+kpoints:
+  density: 1000
+  # force_gamma: True
+  # # alternatively you can go the conventional way.
+  # mode: M or G
+  # divisions: [6, 6, 6]
+poscar:
+  # # you need to create a directory TEMPLATES/ under INPUT/ and put POSCAR-zincblende in it.
+  template: POSCAR-zincblende
+  # # if below is uncomment, template will be relative to run_dir.
+  # rel_to_run_dir: True
+  # # alternatively you can sign up for the materialsproject.org and store the KEY as an environmental variable according to their instructions. Read the docs in run_module.py to see what you can do.
+  # material_id: mp-492
+  # # there are a few adjustments to choose from for the structure.
+  # get_structure: conventional_standard
+# # you are free to change elements from the POSCAR, even specifying potential flavors, which will be updated in the POTCAR.
+repl_elems: {C: Ge_d}
+## if below is uncommented, the json file is read and some properties extracted. Read the docs in run_module.py.
+# infer_from_json: ../properties.json

@@ -73,39 +73,22 @@ if __name__ == '__main__':
     rmd.init_stdout()
 
     # read settings
-
-    # POSCAR
-    if 'poscar' in run_specs:
-        structure = rmd.get_structure(run_specs)
-    elif os.path.isfile('../POSCAR'):
-        structure = mg.Structure.from_file('../POSCAR')
-        rmd.insert_elem_types(run_specs, structure)
-
-    # INCAR
+    rmd.infer_from_json(run_specs)
+    structure = rmd.get_structure(run_specs)
     incar = rmd.read_incar(run_specs)
-    if os.path.isfile('../properties.json'):
-        properties = rmd.fileload('../properties.json')
-        if 'ISPIN' not in incar:
-            if rmd.detect_is_mag(properties['mag']):
-                incar.update({'ISPIN': 2})
-            else:
-                incar.update({'ISPIN': 1})
+    kpoints = rmd.read_kpoints(run_specs, structure)
 
     # POTCAR dump
     rmd.write_potcar(run_specs)
-
     potcars = mg.io.vasp.Potcar.from_file('POTCAR')
     incar['ENCUT'] = rmd.get_max_ENMAX(potcars)
     NBANDS, basisfunctions_str = get_NBANDS_and_basisfunctions_str(potcars, structure)
     incar['NBANDS'] = NBANDS
 
-    # KPOINTS
-    kpoints = rmd.read_kpoints(run_specs, structure)
-
     # write input files and run vasp
+    structure.to(filename='POSCAR')
     incar.write_file('INCAR')
     kpoints.write_file('KPOINTS')
-    structure.to(filename='POSCAR')
     rmd.run_vasp()
 
     # LOBSTER

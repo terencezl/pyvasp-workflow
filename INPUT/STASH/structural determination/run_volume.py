@@ -77,22 +77,23 @@ if __name__ == '__main__':
     Obtain the equilibrium volume and bulk modulus by third order Burch-
     Murnaghan EOS fit.
 
-    Optionally, with the tag 'rerun' set to True, if the "goodness" (see the
-    actual code) is not reached, reconstruct the volume range and rerun till the
-    fit is "good".
-
-    Optionally, you can set a 'volume' tag in the specs file like
+    yYou can set a 'volume' tag in the specs file like
 
         volume:
           begin: 15
           end:   25
           sample_point_num: 5
 
-    If 'volume' or 'pressure' does not exist, a ../properties.json file is
-    attempted and if it exists, it should contain a 'V0' field, the volume range
-    is constructed with 5 points between 0.9 * V0 and 1.1 * V0. If this file
-    doesn't exsit, the volume of the structure returned by rmd.get_structure()
-    is used to do the same construction.
+    If 'volume' or 'pressure' does not exist, setting 'infer_from_json' in the
+    specs file allows the 'V0' key to be the equilibrium volume and a range of
+    0.9V0 ~ 1.1V0 is attempted.
+
+    Lastly, if none above exists, the volume of the structure returned by
+    rmd.get_structure() is used to do the same construction.
+
+    Optionally, with the tag 'rerun' set to True, if the "goodness" (see the
+    actual code) is not reached, reconstruct the volume range and rerun till the
+    fit is "good".
 
     Optionally, you can set a 'pressure' tag in the specs file like
 
@@ -115,42 +116,18 @@ if __name__ == '__main__':
     rmd.filedump(run_specs, filename)
     rmd.init_stdout()
 
+    rmd.infer_from_json(run_specs)
+    structure = rmd.get_structure(run_specs)
     incar = rmd.read_incar(run_specs)
-    is_properties = None
-    if os.path.isfile(('../properties.json')):
-        is_properties = True
-        properties = rmd.fileload('../properties.json')
-
-    if 'ISPIN' in incar:
-        is_mag = incar['ISPIN'] == 2
-    elif is_properties:
-        is_mag = rmd.detect_is_mag(properties['mag'])
-        if is_mag:
-            incar.update({'ISPIN': 2})
-        else:
-            incar.update({'ISPIN': 1})
-    else:
-        is_mag = False
-
-    # higher priority for run_specs
-    if 'poscar' in run_specs:
-        structure = rmd.get_structure(run_specs)
-    elif os.path.isfile('../POSCAR'):
-        structure = mg.Structure.from_file('../POSCAR')
-        rmd.insert_elem_types(run_specs, structure)
-
     kpoints = rmd.read_kpoints(run_specs, structure)
+
+    is_mag = incar['ISPIN'] == 2 if 'ISPIN' in incar else False
 
     if 'volume' in run_specs and run_specs['volume']:
         volume_params = run_specs['volume']
         V_begin = volume_params['begin']
         V_end = volume_params['end']
         V_sample_point_num = volume_params['sample_point_num']
-    elif is_properties:
-        V0 = properties['V0']
-        V_begin = V0 * 9./10
-        V_end = V0 * 11./10
-        V_sample_point_num = 5
     else:
         V0 = structure.volume
         V_begin = V0 * 9./10
@@ -164,7 +141,7 @@ if __name__ == '__main__':
         # first round
         is_well_fitted, V0, structure, is_mag = volume_fitting(structure, is_mag, fitting_results)
 
-    if 'rerun' in run_specs and run_specs['rerun']:
+    if 'volume' in run_specs and 'rerun' in run_specs['volume'] and run_specs['volume']['rerun']:
         # possible next rounds
         while not is_well_fitted:
             V_begin = V0 * 9./10
@@ -202,8 +179,7 @@ if __name__ == '__main__':
         mag = 0
 
     # dump properties.json
-    if is_properties:
-        # load again immediately before save
+    if os.path.isfile(('../properties.json')):
         properties = rmd.fileload('../properties.json')
     else:
         properties = {}

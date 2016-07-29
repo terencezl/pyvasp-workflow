@@ -34,7 +34,7 @@ if __name__ == '__main__':
             density: 6000
 
     It will cause the INCAR and/or KPOINTS to change before starting the second
-    and after reruns. This allows for the initial run with a large NSW and low
+    and more reruns. This allows for the initial run with a large NSW and low
     relaxation parameters, and the second and after runs with high relaxation
     parameters.
 

@@ -60,9 +60,6 @@ if __name__ == '__main__':
         LWAVE: True
         ISTART: 0
 
-    It will cause the INCAR and/or KPOINTS to change before starting the static
-    run.
-
     """
 
     # pre-config

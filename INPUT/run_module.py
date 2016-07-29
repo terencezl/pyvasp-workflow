@@ -390,6 +390,7 @@ def get_structure(run_specs):
 
         structure = mg.Structure.from_spacegroup(poscar_specs['spacegroup'], lattice,
                 elem_types_struct_multi, poscar_specs['atoms_direct_coords'])
+        run_specs['elem_types'] = poscar_specs['elem_types']
         return structure
 
 

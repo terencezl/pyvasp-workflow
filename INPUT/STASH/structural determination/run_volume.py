@@ -77,7 +77,7 @@ if __name__ == '__main__':
     Obtain the equilibrium volume and bulk modulus by third order Burch-
     Murnaghan EOS fit.
 
-    yYou can set a 'volume' tag in the specs file like
+    You can set a 'volume' tag in the specs file like
 
         volume:
           begin: 15
@@ -89,7 +89,7 @@ if __name__ == '__main__':
     0.9V0 ~ 1.1V0 is attempted.
 
     Lastly, if none above exists, the volume of the structure returned by
-    rmd.get_structure() is used to do the same construction.
+    rmd.get_structure() is used to do the same range construction.
 
     Optionally, with the tag 'rerun' set to True, if the "goodness" (see the
     actual code) is not reached, reconstruct the volume range and rerun till the
@@ -108,6 +108,9 @@ if __name__ == '__main__':
     range. A second run is done using those volume values. the tag
     'skip_test_run' tells the code to just use the fitting_params.json in the
     working directory without doing the test run.
+
+    If 'dump_to_json' exists in the specs file and is set to a path, output some
+    important results to that file.
 
     """
 
@@ -178,14 +181,13 @@ if __name__ == '__main__':
     else:
         mag = 0
 
-    # dump properties.json
-    if os.path.isfile(('../properties.json')):
-        properties = rmd.fileload('../properties.json')
-    else:
-        properties = {}
-    properties['V0'] = fitting_results[-1]['params']['V0']
-    properties['B0'] = fitting_results[-1]['params']['B0']
-    properties.update({'E0': E0, 'mag': mag})
-    rmd.filedump(properties, '../properties.json')
-
-    shutil.copy('CONTCAR', '../POSCAR')
+    # dump important results
+    if 'dump_to_json' in run_specs and run_specs['dump_to_json']:
+        if os.path.isfile(run_specs['dump_to_json']):
+            json_dump = rmd.fileload(run_specs['dump_to_json'])
+        else:
+            json_dump = {}
+        json_dump['V0'] = fitting_results[-1]['params']['V0']
+        json_dump['B0'] = fitting_results[-1]['params']['B0']
+        json_dump.update({'E0': E0, 'mag': mag})
+        rmd.filedump(json_dump, run_specs['dump_to_json'])

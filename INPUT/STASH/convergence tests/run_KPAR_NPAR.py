@@ -13,8 +13,9 @@ if __name__ == '__main__':
 
     You should set a 'KPAR_NPAR_change' tag in the specs file, like
 
-        KPAR_NPAR_change: [[4,1], [4,2], [4,4], [4,8], [4,16], [8,1], [8,2],
-                        [8,4], [8,8], [16,1], [16,2], [16,4], [32,1], [32,2]]
+        KPAR_NPAR_test
+          change: [[4,1], [4,2], [4,4], [4,8], [4,16], [8,1], [8,2],
+                   [8,4], [8,8], [16,1], [16,2], [16,4], [32,1], [32,2]]
 
     """
 
@@ -28,7 +29,7 @@ if __name__ == '__main__':
     incar = rmd.read_incar(run_specs)
     kpoints = rmd.read_kpoints(run_specs, structure)
 
-    KPAR_NPAR_change = np.array(run_specs['KPAR_NPAR_change'])
+    KPAR_NPAR_change = np.array(run_specs['KPAR_NPAR_test']['change'])
     energy = np.zeros(len(KPAR_NPAR_change))
     time = np.zeros(len(KPAR_NPAR_change))
 

@@ -2,8 +2,10 @@ import os
 import sys
 import argparse
 import warnings
+import timeit
+import datetime
 import shutil
-from subprocess import call
+import subprocess
 import re
 import json
 import yaml
@@ -18,6 +20,33 @@ VASP_EXEC = os.getenv('VASP_EXEC', 'OR-PATH-TO-YOUR-VASP-EXEC-default')
 VASP_POTENTIALS_DIR = os.getenv('VASP_POTENTIALS_DIR', 'OR-PATH-TO-YOUR-VASP_POTENTIALS_DIR-default')
 # environmental variable optional, default to INPUT/TEMPLATES
 VASP_TEMPLATES_DIR = os.getenv('VASP_TEMPLATES_DIR', os.path.join(os.getcwd(), 'INPUT/TEMPLATES'))
+
+
+class Tee(object):
+    """
+
+    Invoked by init_stdout() to duplicate stdout and stderr into a file.
+
+    """
+
+    def __init__(self, name, mode):
+        self.file = open(name, mode)
+        self.stdout = sys.stdout
+        self.stderr = sys.stderr
+        sys.stdout = self
+        sys.stderr = self
+
+    def restore(self):
+        sys.stdout = self.stdout
+        sys.stderr = self.stderr
+        self.file.close()
+
+    def write(self, data):
+        self.file.write(data)
+        self.stdout.write(data)
+
+    def flush(self):
+        pass
 
 
 def fileload(filename):
@@ -116,11 +145,6 @@ def get_run_dir(run_specs):
     return dirname
 
 
-def enter_main_dir(run_specs):
-    warnings.warn("Please use get_run_dir() instead.", DeprecationWarning)
-    chdir(get_run_dir(run_specs))
-
-
 def init_stdout():
     """
 
@@ -129,7 +153,9 @@ def init_stdout():
     """
 
     # stdout_str = 'stdout_' + datetime.datetime.now().isoformat(sep='-') + '.out'
-    call('echo "Working directory: $PWD" | tee stdout', shell=True)
+    Tee('stdout', 'w')
+    print("DateTime: " + str(datetime.datetime.now()))
+    print("Working directory: " + os.getcwd())
 
 
 def run_vasp():
@@ -141,13 +167,9 @@ def run_vasp():
 
     """
 
-    time_format = ' "\n----------\nreal     %E" '
-    time = '/usr/bin/time -f ' + time_format
-    run = call(time + VASP_EXEC + ' 2>&1 | tee -a stdout', shell=True)
-    if run != 0:
-        sys.exit(1)
-    hbreak = ' "\n' + '=' * 100 + '\n" '
-    call('echo -e ' + hbreak + ' | tee -a stdout', shell=True)
+    time = timeit.Timer('print(subprocess.check_output("{}", shell=True).decode())'.format(VASP_EXEC), 'import subprocess').timeit(1)
+    print('\n----------\nreal     ' + str(datetime.timedelta(seconds=int(time))))
+    print('\n' + '=' * 100 + '\n')
 
 
 def detect_is_mag(mag, tol=1e-3):
@@ -330,7 +352,7 @@ def get_structure(run_specs):
         structure = m.get_structure_by_material_id(poscar_specs['material_id'])
     if is_template or is_material_id:
         if 'get_structure' in poscar_specs:
-            prec = poscar_specs['prec'] if 'prec' in poscar_specs else 0.01
+            prec = poscar_specs['prec'] if 'prec' in poscar_specs else 1e-3
             sga = mg.symmetry.analyzer.SpacegroupAnalyzer(structure, symprec=prec)
             if poscar_specs['get_structure'] == 'sorted':
                 structure = structure.get_sorted_structure()
@@ -345,20 +367,14 @@ def get_structure(run_specs):
             elif poscar_specs['get_structure'] == 'refined':
                 structure = sga.get_refined_structure()
 
-        if 'elem_types' not in run_specs:
-            symbol_set = list(structure.symbol_set)
-            if 'repl_elems' in run_specs:
-                for idx, symbol in enumerate(symbol_set):
-                    if symbol in run_specs['repl_elems']:
-                        symbol_set[idx] = run_specs['repl_elems'][symbol]
-                repl_elems_struct = {key: re.sub(r'_.*', '', value) for key, value in run_specs['repl_elems'].items()}
-                structure.replace_species(repl_elems_struct)
-            run_specs['elem_types'] = symbol_set
-        else:
-            # deprecated
-            elem_types_struct = [re.sub(r'_.*', '', i) for i in run_specs['elem_types']]
-            for i, item in enumerate(structure.symbol_set):
-                structure.replace_species({item: elem_types_struct[i]})
+        symbol_set = list(structure.symbol_set)
+        if 'repl_elems' in run_specs:
+            for idx, symbol in enumerate(symbol_set):
+                if symbol in run_specs['repl_elems']:
+                    symbol_set[idx] = run_specs['repl_elems'][symbol]
+            repl_elems_struct = {key: re.sub(r'_.*', '', value) for key, value in run_specs['repl_elems'].items()}
+            structure.replace_species(repl_elems_struct)
+        run_specs['elem_types'] = symbol_set
 
         if 'volume' in poscar_specs:
             structure.scale_lattice(poscar_specs['volume'])
@@ -392,11 +408,6 @@ def get_structure(run_specs):
                 elem_types_struct_multi, poscar_specs['atoms_direct_coords'])
         run_specs['elem_types'] = poscar_specs['elem_types']
         return structure
-
-
-def generate_structure(run_specs):
-    warnings.warn("Please use get_structure() instead.", DeprecationWarning)
-    return get_structure(run_specs)
 
 
 def write_potcar(run_specs):

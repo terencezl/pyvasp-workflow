@@ -79,5 +79,3 @@ if __name__ == '__main__':
         structure = mg.Structure.from_file('CONTCAR')
         structure.to(filename='POSCAR')
         rmd.run_vasp()
-
-    shutil.copy('CONTCAR', '../POSCAR')

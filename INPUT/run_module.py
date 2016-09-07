@@ -2,8 +2,8 @@ import os
 import sys
 import argparse
 import warnings
-import timeit
-import datetime
+# import timeit
+# import datetime
 import shutil
 import subprocess
 import re
@@ -47,6 +47,16 @@ class Tee(object):
 
     def flush(self):
         pass
+
+
+def print(obj):
+    """
+
+    print to screen as well as file.
+
+    """
+
+    subprocess.call('echo "' + str(obj) + '" | tee stdout', shell=True)
 
 
 def fileload(filename):
@@ -121,27 +131,11 @@ def get_run_dir(run_specs):
 
     Get the directory where the routine takes place.
 
-    If 'run_dir' is in the specs file, use that.
-
-    Otherwise, use a naming scheme that combines 'structure' and 'elem_types',
-    like rocksalt-Ti_sv+N. If either 'run_supdir' or 'run_subdir' exist, wrap up
-    this naming scheme with them. Not recommended.
-
-    If none of the two exists, name it 'vasp_test'.
+    If 'run_dir' is in the specs file, use that; otherwise name it 'vasp_test'.
 
     """
 
-    if 'run_dir' in run_specs:
-        dirname = run_specs['run_dir']
-    elif 'structure' in run_specs and 'elem_types' in run_specs:
-        dirname = run_specs['structure'] + '-' + '+'.join(run_specs['elem_types'])
-        if 'run_subdir' in run_specs:
-            dirname = os.path.join(dirname, run_specs['run_subdir'])
-        if 'run_supdir' in run_specs:
-            dirname = os.path.join(run_specs['run_supdir'], dirname)
-    else:
-        dirname = 'vasp_test'
-
+    dirname = run_specs['run_dir'] if 'run_dir' in run_specs else 'vasp_test'
     return dirname
 
 
@@ -153,9 +147,12 @@ def init_stdout():
     """
 
     # stdout_str = 'stdout_' + datetime.datetime.now().isoformat(sep='-') + '.out'
-    Tee('stdout', 'w')
-    print("DateTime: " + str(datetime.datetime.now()))
-    print("Working directory: " + os.getcwd())
+    # Tee('stdout', 'w')
+    # print("DateTime: " + str(datetime.datetime.now()))
+    # print("Working directory: " + os.getcwd())
+
+    subprocess.call('date | tee stdout', shell=True)
+    subprocess.call('echo "Working directory: $PWD" | tee -a stdout', shell=True)
 
 
 def run_vasp():
@@ -167,9 +164,16 @@ def run_vasp():
 
     """
 
-    time = timeit.Timer('print(subprocess.check_output("{}", shell=True).decode())'.format(VASP_EXEC), 'import subprocess').timeit(1)
-    print('\n----------\nreal     ' + str(datetime.timedelta(seconds=int(time))))
-    print('\n' + '=' * 100 + '\n')
+    time_format = ' "\n----------\nreal     %E" '
+    time = '/usr/bin/time -f ' + time_format
+    subprocess.check_call(time + VASP_EXEC + ' 2>&1 | tee -a stdout', shell=True)
+    hbreak = ' "\n' + '=' * 100 + '\n" '
+    call('echo -e ' + hbreak + ' | tee -a stdout', shell=True)
+
+    # print(subprocess.check_output(time + VASP_EXEC, shell=True))
+    # time = timeit.Timer('print(subprocess.check_output("{}", shell=True).decode())'.format(VASP_EXEC), 'import subprocess').timeit(1)
+    # print('\n----------\nreal     ' + str(datetime.timedelta(seconds=int(time))))
+    # print('\n' + '=' * 100 + '\n')
 
 
 def detect_is_mag(mag, tol=1e-3):

@@ -1,6 +1,5 @@
 import run_module as rmd
 import os
-import shutil
 import numpy as np
 import pymatgen as mg
 import matplotlib.pyplot as plt
@@ -61,12 +60,16 @@ if __name__ == '__main__':
         incar.write_file('INCAR')
         rmd.run_vasp()
 
-    # vasprun = mg.io.vasp.Vasprun('vasprun.xml')
-    # plt.plot(vasprun.dielectric[0], np.array(vasprun.dielectric[1])[:,0], 'r')
-    # plt.plot(vasprun.dielectric[0], np.array(vasprun.dielectric[2])[:,0], 'b')
-    # plt.title('Complex Dielectric Function')
-    # plt.xlabel('Energy (eV)')
-    # plt.ylabel('Complex Permittivity')
-    # plt.tight_layout()
-    # plt.savefig('dielectric.pdf')
-    # plt.close()
+    vasprun = mg.io.vasp.Vasprun('vasprun_loptics.xml')
+    E = np.array(vasprun.dielectric[0])
+    mask = (E > 0.4) & (E < 6)
+    plt.plot(E[mask], np.array(vasprun.dielectric[1])[mask, 0])
+    plt.plot(E[mask], np.array(vasprun.dielectric[2])[mask, 0])
+    plt.axhline(0, 0, 1, color='k', dashes=[4, 2], alpha=0.7)
+    plt.title('Complex Dielectric Function')
+    plt.xlabel('Energy (eV)')
+    plt.ylabel('Complex Permittivity')
+    plt.legend([r'$\varepsilon_1$', r'$\varepsilon_2$'], loc=0)
+    plt.tight_layout()
+    plt.savefig('dielectric.pdf')
+    plt.close()

@@ -75,7 +75,7 @@ if __name__ == '__main__':
             incar.write_file('INCAR')
             kpoints.write_file('KPOINTS')
             lattice_modified = mg.Lattice(
-                np.dot(structure.lattice_vectors(), strain(value)))
+                np.dot(structure.lattice.matrix, strain(value)))
             structure_copy = structure.copy()
             structure_copy.modify_lattice(lattice_modified)
             structure_copy.to(filename='POSCAR')

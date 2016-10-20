@@ -168,7 +168,7 @@ def run_vasp():
     time = '/usr/bin/time -f ' + time_format
     subprocess.check_call(time + VASP_EXEC + ' 2>&1 | tee -a stdout', shell=True)
     hbreak = ' "\n' + '=' * 100 + '\n" '
-    call('echo -e ' + hbreak + ' | tee -a stdout', shell=True)
+    subprocess.call('echo -e ' + hbreak + ' | tee -a stdout', shell=True)
 
     # print(subprocess.check_output(time + VASP_EXEC, shell=True))
     # time = timeit.Timer('print(subprocess.check_output("{}", shell=True).decode())'.format(VASP_EXEC), 'import subprocess').timeit(1)

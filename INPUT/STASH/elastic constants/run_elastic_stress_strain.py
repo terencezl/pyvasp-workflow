@@ -63,7 +63,7 @@ if __name__ == '__main__':
         stress_list.append(elasticity.stress.Stress(vasprun.ionic_steps[-1]['stress'])/-10)
         rmd.filedump([i.tolist() for i in stress_list], 'stress_list.json')
 
-    elastic_tensor = elasticity.elastic.ElasticTensor.from_strain_stress_list(strain_list, stress_list)
+    elastic_tensor = elasticity.elastic.ElasticTensor.from_strain_stress_list(strain_list, stress_list).voigt
     elastic_tensor_df = pd.DataFrame(elastic_tensor, index=range(1, 7), columns=range(1, 7))
     elastic_tensor_df.to_csv('elastic_tensor.csv')
     pd.set_option('display.float_format', lambda x: '%.6f' % x)

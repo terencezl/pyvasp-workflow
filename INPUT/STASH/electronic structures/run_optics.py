@@ -46,7 +46,7 @@ if __name__ == '__main__':
     os.rename('vasprun.xml', 'vasprun_static.xml')
 
     # independet particle dielectric functions
-    incar['ALGO'] = 'Exact'
+    # incar['ALGO'] = 'Exact'
     incar['LOPTICS'] = True
     incar.update(run_specs['optics']['incar'])
     incar.write_file('INCAR')
@@ -68,7 +68,6 @@ if __name__ == '__main__':
     plt.axhline(0, 0, 1, color='k', dashes=[4, 2], alpha=0.7)
     plt.title('Complex Dielectric Function')
     plt.xlabel('Energy (eV)')
-    plt.ylabel('Complex Permittivity')
     plt.legend([r'$\varepsilon_1$', r'$\varepsilon_2$'], loc=0)
     plt.tight_layout()
     plt.savefig('dielectric.pdf')
